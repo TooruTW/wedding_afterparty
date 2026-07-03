@@ -49,44 +49,48 @@ function BeanPart({
 }
 
 export function BeanPerson({ body, position = [0, 0, 0] }: BeanPersonProps) {
-  const s = body.height
-  const headR = 0.1 * body.head * s
-  const buttR = 0.07 * body.butt * s
-  const armLen = 0.1 * body.armLength * s
-  const legLen = 0.28 * s
+  // ponytail: 雛型固定值；僅 legHeight / headSize 對外開放
+  const s = 1.2
+  const color = '#FFFFFF'
+  const limbR = 0.07 * 3 * s * 0.35
+  const armLen = 0.1 * 3.5 * s
   const torsoH = 0.24 * s
+  const legGap = 0.03 * s
+
+  const legLen = 0.28 * s * body.legHeight
+  const headR = 0.1 * 2.8 * s * body.headSize
 
   const hipY = legLen
   const torsoY = hipY + torsoH / 2
-  const headY = hipY + torsoH + headR * 0.9
+  const torsoTop = hipY + torsoH * 1.25
+  const headGap = 0.01 * s
   const shoulderY = hipY + torsoH * 0.85
 
-  const limbR = buttR * 0.35
-  const legGap = 0.03 * s // ponytail: 固定小間距，夠看出兩腿分開即可
   const legX = limbR + legGap / 2
   const legSpan = limbR * 4 + legGap
   const torsoR = legSpan / 2
   const shoulderX = torsoR
+  const headY = torsoTop + headGap + headR
 
   return (
     <group position={position}>
       <group position={[-legX, hipY, 0]}>
-        <BeanCapsule color={body.color} position={[0, -legLen / 2, 0]} radius={limbR} length={legLen} />
+        <BeanCapsule color={color} position={[0, -legLen / 2, 0]} radius={limbR} length={legLen} />
       </group>
 
       <group position={[legX, hipY, 0]}>
-        <BeanCapsule color={body.color} position={[0, -legLen / 2, 0]} radius={limbR} length={legLen} />
+        <BeanCapsule color={color} position={[0, -legLen / 2, 0]} radius={limbR} length={legLen} />
       </group>
 
-      <BeanPart color={body.color} kind="capsule" position={[0, torsoY, 0]} scale={[torsoR, torsoH / 2, torsoR * 0.65]} />
-      <BeanPart color={body.color} kind="sphere" position={[0, headY, 0]} scale={[headR, headR, headR]} />
+      <BeanPart color={color} kind="capsule" position={[0, torsoY, 0]} scale={[torsoR, torsoH / 2, torsoR * 0.65]} />
+      <BeanPart color={color} kind="sphere" position={[0, headY, 0]} scale={[headR, headR, headR]} />
 
       <group position={[-shoulderX, shoulderY, 0]} rotation={[0, 0, -Math.PI / 2]}>
-        <BeanCapsule color={body.color} position={[0, -armLen / 2, 0]} radius={limbR} length={armLen} />
+        <BeanCapsule color={color} position={[0, -armLen / 2, 0]} radius={limbR} length={armLen} />
       </group>
 
       <group position={[shoulderX, shoulderY, 0]} rotation={[0, 0, Math.PI / 2]}>
-        <BeanCapsule color={body.color} position={[0, -armLen / 2, 0]} radius={limbR} length={armLen} />
+        <BeanCapsule color={color} position={[0, -armLen / 2, 0]} radius={limbR} length={armLen} />
       </group>
     </group>
   )
