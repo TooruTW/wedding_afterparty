@@ -61,16 +61,17 @@ export function BeanPerson({ body, position = [0, 0, 0] }: BeanPersonProps) {
   const headR = 0.1 * 2.8 * s * body.headSize
 
   const hipY = legLen
-  const torsoY = hipY + torsoH / 2
-  const torsoTop = hipY + torsoH * 1.25
-  const headGap = 0.01 * s
-  const shoulderY = hipY + torsoH * 0.85
+  const partGap = 0.025 * s
+  const torsoBottom = hipY + partGap
+  const torsoY = torsoBottom + torsoH * 0.75
+  const torsoTop = torsoY + torsoH * 0.75
+  const shoulderY = torsoY + torsoH * 0.35
 
   const legX = limbR + legGap / 2
   const legSpan = limbR * 4 + legGap
   const torsoR = legSpan / 2
   const shoulderX = torsoR
-  const headY = torsoTop + headGap + headR
+  const headY = torsoTop + partGap + headR
 
   return (
     <group position={position}>
