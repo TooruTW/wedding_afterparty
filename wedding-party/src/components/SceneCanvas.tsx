@@ -12,6 +12,7 @@ export function SceneCanvas({ children }: SceneCanvasProps) {
       camera={{ position: [0, 1.5, 4], fov: 50 }}
       style={{ background: '#0a0a0a' }}
     >
+      <gridHelper args={[6, 12, '#333', '#222']} />
       <OrbitControls />
       {children}
     </Canvas>
