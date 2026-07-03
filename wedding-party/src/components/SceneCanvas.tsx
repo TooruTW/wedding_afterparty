@@ -1,3 +1,4 @@
+import { OrbitControls } from '@react-three/drei'
 import { Canvas } from '@react-three/fiber'
 import type { ReactNode } from 'react'
 
@@ -11,6 +12,7 @@ export function SceneCanvas({ children }: SceneCanvasProps) {
       camera={{ position: [0, 1.5, 4], fov: 50 }}
       style={{ background: '#0a0a0a' }}
     >
+      <OrbitControls />
       {children}
     </Canvas>
   )
