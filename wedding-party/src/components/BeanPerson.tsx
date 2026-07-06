@@ -1,3 +1,4 @@
+import { Html } from '@react-three/drei'
 import { useRef } from 'react'
 import type { Body } from '../types/body'
 import type { Pivot, Pose } from '../types/pose'
@@ -7,6 +8,7 @@ import { useWalkUpper } from './walk/useWalkUpper'
 import { useSitPose } from './sit/useSitPose'
 import { SIT_HIP_FORWARD, SIT_SHOULDER_INSET } from './sit/applySitPose'
 import { WalkLegs } from './walk/WalkLegs'
+import { useChatPose } from './chat/useChatPose'
 
 type BeanPersonProps = {
   body: Body
@@ -73,6 +75,48 @@ function FaceMark({
   )
 }
 
+function ChatBubble({ headY, headR }: { headY: number; headR: number }) {
+  return (
+    <Html position={[0, headY + headR * 1.85, 0]} center distanceFactor={10} sprite>
+      <div
+        style={{
+          position: 'relative',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          minWidth: 24,
+          height: 16,
+          padding: '0 6px',
+          borderRadius: 999,
+          background: '#ffffff',
+          border: '1px solid #d6d6d6',
+          opacity: 0.95,
+          color: '#1a1a1a',
+          fontSize: 10,
+          fontWeight: 700,
+          lineHeight: 1,
+          letterSpacing: 1,
+        }}
+      >
+        ...
+        <div
+          style={{
+            position: 'absolute',
+            left: '62%',
+            bottom: -4,
+            width: 6,
+            height: 6,
+            background: '#ffffff',
+            borderRight: '1px solid #d6d6d6',
+            borderBottom: '1px solid #d6d6d6',
+            transform: 'translateX(-50%) rotate(45deg)',
+          }}
+        />
+      </div>
+    </Html>
+  )
+}
+
 export function BeanPerson({
   body,
   position = [0, 0, 0],
@@ -115,11 +159,12 @@ export function BeanPerson({
   const upperRefs = { characterRef, bodyRef, headRef, leftArmRef, rightArmRef }
 
   const walkPhase = position[0] * 0.7
-  const walking = pose !== 'sit'
+  const walking = pose === 'stand'
   const walkSpeed = WALK_SPEED[walkStyle]
   const { cycle, leftLegRef, rightLegRef } = useWalkCycle(walkSpeed, walkPhase, 0.02 * s, walking)
   useWalkUpper(walkStyle, upperRefs, cycle, walking)
   useSitPose(pose === 'sit', { ...upperRefs, leftLegRef, rightLegRef }, { hipY, limbR }, position[0] * 0.7)
+  useChatPose(pose === 'chat', upperRefs, position[0] * 0.4)
 
   const hipZ = pose === 'sit' ? limbR * SIT_HIP_FORWARD : 0
 
@@ -142,6 +187,7 @@ export function BeanPerson({
           <group ref={headRef} position={[0, neckY, 0]}>
             <BeanPart color={color} kind="sphere" position={[0, headOffset, 0]} scale={[headR, headR, headR]} />
             <FaceMark headY={headOffset} headR={headR} />
+            {pose === 'chat' ? <ChatBubble headY={headOffset} headR={headR} /> : null}
           </group>
 
           <group ref={leftArmRef} position={[-shoulderX, shoulderY, shoulderZ]}>
