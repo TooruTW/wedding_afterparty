@@ -6,9 +6,11 @@ function App() {
   return (
     <div className="app">
       <SceneCanvas>
-        <BeanPerson body={DEFAULT_BODY} position={[-1.8, 0, 0]} walkSpeed={4} walkStyle="normal" />
+        <BeanPerson body={DEFAULT_BODY} position={[-4, 0, 0]} walkSpeed={4} walkStyle="normal" />
+        <BeanPerson body={DEFAULT_BODY} position={[-2, 0, 0]} walkSpeed={5} walkStyle="normal" />
         <BeanPerson body={DEFAULT_BODY} position={[0, 0, 0]} walkSpeed={5} walkStyle="normal" />
-        <BeanPerson body={DEFAULT_BODY} position={[1.8, 0, 0]} walkSpeed={9} walkStyle="frenzy" />
+        <BeanPerson body={DEFAULT_BODY} position={[2, 0, 0]} walkSpeed={7} walkStyle="frenzy" />
+        <BeanPerson body={DEFAULT_BODY} position={[4, 0, 0]} walkSpeed={9} walkStyle="frenzy" />
       </SceneCanvas>
     </div>
   )

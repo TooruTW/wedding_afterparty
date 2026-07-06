@@ -9,10 +9,10 @@ type SceneCanvasProps = {
 export function SceneCanvas({ children }: SceneCanvasProps) {
   return (
     <Canvas
-      camera={{ position: [0, 1.5, 4], fov: 50 }}
+      camera={{ position: [0, 2.2, 7], fov: 50 }}
       style={{ background: '#0a0a0a' }}
     >
-      <gridHelper args={[6, 12, '#333', '#222']} />
+      <gridHelper args={[12, 24, '#333', '#222']} />
       <OrbitControls />
       {children}
     </Canvas>
