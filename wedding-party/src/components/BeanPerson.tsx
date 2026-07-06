@@ -1,8 +1,10 @@
 import { useRef } from 'react'
 import type { Body } from '../types/body'
-import type { Pivot, WalkStyle } from './walk/types'
+import type { Pivot, Pose, WalkStyle } from './walk/types'
 import { useWalkCycle } from './walk/useWalkCycle'
 import { useWalkUpper } from './walk/useWalkUpper'
+import { useSitPose } from './walk/useSitPose'
+import { SIT_HIP_FORWARD, SIT_SHOULDER_INSET } from './walk/applySitPose'
 import { WalkLegs } from './walk/WalkLegs'
 
 type BeanPersonProps = {
@@ -10,6 +12,7 @@ type BeanPersonProps = {
   position?: [number, number, number]
   walkSpeed?: number
   walkStyle?: WalkStyle
+  pose?: Pose
 }
 
 function BeanCapsule({
@@ -75,6 +78,7 @@ export function BeanPerson({
   position = [0, 0, 0],
   walkSpeed = 5,
   walkStyle = 'normal',
+  pose = 'stand',
 }: BeanPersonProps) {
   // ponytail: 雛型固定值；僅 headSize 對外開放
   const s = 1.2
@@ -98,7 +102,8 @@ export function BeanPerson({
   const legSpan = limbR * 4 + legGap
   const torsoR = legSpan / 2
   const shoulderY = torsoTop - torsoH * 0.2
-  const shoulderX = torsoR + limbR * 0.9
+  const shoulderSpread = torsoR + limbR * 0.9
+  const shoulderX = pose === 'sit' ? shoulderSpread * SIT_SHOULDER_INSET : shoulderSpread
   const shoulderZ = walkStyle === 'frenzy' ? -limbR * 1.0 : 0
   const headY = torsoTop + partGap + headR
 
@@ -109,8 +114,12 @@ export function BeanPerson({
   const upperRefs = { characterRef, bodyRef, leftArmRef, rightArmRef }
 
   const walkPhase = position[0] * 0.7
-  const { cycle, leftLegRef, rightLegRef } = useWalkCycle(walkSpeed, walkPhase, 0.02 * s)
-  useWalkUpper(walkStyle, upperRefs, cycle)
+  const walking = pose !== 'sit'
+  const { cycle, leftLegRef, rightLegRef } = useWalkCycle(walkSpeed, walkPhase, 0.02 * s, walking)
+  useWalkUpper(walkStyle, upperRefs, cycle, walking)
+  useSitPose(pose === 'sit', { ...upperRefs, leftLegRef, rightLegRef }, { hipY, limbR })
+
+  const hipZ = pose === 'sit' ? limbR * SIT_HIP_FORWARD : 0
 
   return (
     <group position={position}>
@@ -119,8 +128,8 @@ export function BeanPerson({
           color={color}
           leftLegRef={leftLegRef}
           rightLegRef={rightLegRef}
-          leftHip={[-legX, hipY, 0]}
-          rightHip={[legX, hipY, 0]}
+          leftHip={[-legX, hipY, hipZ]}
+          rightHip={[legX, hipY, hipZ]}
           legLen={legLen}
           limbR={limbR}
         />

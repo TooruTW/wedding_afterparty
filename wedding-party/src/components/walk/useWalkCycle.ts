@@ -9,12 +9,13 @@ function legSwing(sin: number) {
   return Math.sign(sin) * Math.pow(Math.abs(sin), 0.7) * LEG_SWING
 }
 
-export function useWalkCycle(walkSpeed: number, phase: number, bobScale: number) {
+export function useWalkCycle(walkSpeed: number, phase: number, bobScale: number, enabled = true) {
   const cycle = useRef<WalkCycle>({ swing: 0, bob: 0, cos: 1 })
   const leftLegRef = useRef<Pivot>(null)
   const rightLegRef = useRef<Pivot>(null)
 
   useFrame(({ clock }) => {
+    if (!enabled) return
     const t = clock.elapsedTime * walkSpeed + phase
     const sin = Math.sin(t)
     const cos = Math.cos(t)

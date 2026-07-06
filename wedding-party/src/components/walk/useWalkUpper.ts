@@ -8,8 +8,10 @@ export function useWalkUpper(
   walkStyle: WalkStyle,
   refs: UpperBodyRefs,
   cycle: RefObject<WalkCycle>,
+  enabled = true,
 ) {
   useFrame(() => {
+    if (!enabled) return
     const state = cycle.current
     if (walkStyle === 'frenzy') applyWalkUpperFrenzy(refs, state)
     else applyWalkUpperNormal(refs, state)
