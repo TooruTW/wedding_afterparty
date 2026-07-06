@@ -14,6 +14,7 @@ import { useListenPose } from './listen/useListenPose'
 type BeanPersonProps = {
   body: Body
   position?: [number, number, number]
+  rotationY?: number
   walkStyle?: WalkStyle
   pose?: Pose
 }
@@ -121,6 +122,7 @@ function ChatBubble({ headY, headR }: { headY: number; headR: number }) {
 export function BeanPerson({
   body,
   position = [0, 0, 0],
+  rotationY = 0,
   walkStyle = 'normal',
   pose = 'stand',
 }: BeanPersonProps) {
@@ -171,7 +173,7 @@ export function BeanPerson({
   const hipZ = pose === 'sit' ? limbR * SIT_HIP_FORWARD : 0
 
   return (
-    <group position={position}>
+    <group position={position} rotation={[0, rotationY, 0]}>
       <group ref={characterRef}>
         <WalkLegs
           color={color}
