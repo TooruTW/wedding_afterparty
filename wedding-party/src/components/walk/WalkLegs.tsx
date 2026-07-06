@@ -40,11 +40,15 @@ export function WalkLegs({
 }: WalkLegsProps) {
   return (
     <>
-      <group ref={leftLegRef} position={leftHip}>
-        <LegCapsule color={color} legLen={legLen} limbR={limbR} />
+      <group position={leftHip}>
+        <group ref={leftLegRef}>
+          <LegCapsule color={color} legLen={legLen} limbR={limbR} />
+        </group>
       </group>
-      <group ref={rightLegRef} position={rightHip}>
-        <LegCapsule color={color} legLen={legLen} limbR={limbR} />
+      <group position={rightHip}>
+        <group ref={rightLegRef}>
+          <LegCapsule color={color} legLen={legLen} limbR={limbR} />
+        </group>
       </group>
     </>
   )

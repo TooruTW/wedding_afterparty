@@ -1,6 +1,18 @@
 import type { UpperBodyRefs, WalkCycle } from './types'
 
-// ponytail: 瘋狂走法上半身待實作（揮手過頭、身體後傾）；暫只跟隨步伐起伏
-export function applyWalkUpperFrenzy(refs: UpperBodyRefs, { bob }: WalkCycle) {
-  if (refs.bodyRef.current) refs.bodyRef.current.position.y = bob
+export function applyWalkUpperFrenzy(refs: UpperBodyRefs, { swing, bob, cos }: WalkCycle) {
+  const { bodyRef, leftArmRef, rightArmRef } = refs
+
+  if (bodyRef.current) {
+    bodyRef.current.position.y = bob
+    bodyRef.current.rotation.x = swing * 0.1
+  }
+  if (leftArmRef.current) {
+    leftArmRef.current.rotation.x = -swing * 1.35
+    leftArmRef.current.rotation.z = -Math.PI / 2 + cos * 0.32
+  }
+  if (rightArmRef.current) {
+    rightArmRef.current.rotation.x = swing * 1.35
+    rightArmRef.current.rotation.z = Math.PI / 2 - cos * 0.32
+  }
 }
