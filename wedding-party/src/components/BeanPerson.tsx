@@ -1,10 +1,11 @@
 import { useRef } from 'react'
 import type { Body } from '../types/body'
-import type { Pivot, Pose, WalkStyle } from './walk/types'
+import type { Pivot, Pose } from '../types/pose'
+import type { WalkStyle } from '../types/walk'
 import { useWalkCycle } from './walk/useWalkCycle'
 import { useWalkUpper } from './walk/useWalkUpper'
-import { useSitPose } from './walk/useSitPose'
-import { SIT_HIP_FORWARD, SIT_SHOULDER_INSET } from './walk/applySitPose'
+import { useSitPose } from './sit/useSitPose'
+import { SIT_HIP_FORWARD, SIT_SHOULDER_INSET } from './sit/applySitPose'
 import { WalkLegs } from './walk/WalkLegs'
 
 type BeanPersonProps = {
@@ -105,19 +106,21 @@ export function BeanPerson({
   const shoulderSpread = torsoR + limbR * 0.9
   const shoulderX = pose === 'sit' ? shoulderSpread * SIT_SHOULDER_INSET : shoulderSpread
   const shoulderZ = walkStyle === 'frenzy' ? -limbR * 1.0 : 0
-  const headY = torsoTop + partGap + headR
+  const neckY = torsoTop
+  const headOffset = partGap + headR
 
   const characterRef = useRef<Pivot>(null)
   const bodyRef = useRef<Pivot>(null)
+  const headRef = useRef<Pivot>(null)
   const leftArmRef = useRef<Pivot>(null)
   const rightArmRef = useRef<Pivot>(null)
-  const upperRefs = { characterRef, bodyRef, leftArmRef, rightArmRef }
+  const upperRefs = { characterRef, bodyRef, headRef, leftArmRef, rightArmRef }
 
   const walkPhase = position[0] * 0.7
   const walking = pose !== 'sit'
   const { cycle, leftLegRef, rightLegRef } = useWalkCycle(walkSpeed, walkPhase, 0.02 * s, walking)
   useWalkUpper(walkStyle, upperRefs, cycle, walking)
-  useSitPose(pose === 'sit', { ...upperRefs, leftLegRef, rightLegRef }, { hipY, limbR })
+  useSitPose(pose === 'sit', { ...upperRefs, leftLegRef, rightLegRef }, { hipY, limbR }, position[0] * 0.7)
 
   const hipZ = pose === 'sit' ? limbR * SIT_HIP_FORWARD : 0
 
@@ -136,8 +139,11 @@ export function BeanPerson({
 
         <group ref={bodyRef}>
           <BeanPart color={color} kind="capsule" position={[0, torsoY, 0]} scale={[torsoR, torsoH / 2, torsoR * 0.65]} />
-          <BeanPart color={color} kind="sphere" position={[0, headY, 0]} scale={[headR, headR, headR]} />
-          <FaceMark headY={headY} headR={headR} />
+
+          <group ref={headRef} position={[0, neckY, 0]}>
+            <BeanPart color={color} kind="sphere" position={[0, headOffset, 0]} scale={[headR, headR, headR]} />
+            <FaceMark headY={headOffset} headR={headR} />
+          </group>
 
           <group ref={leftArmRef} position={[-shoulderX, shoulderY, shoulderZ]}>
             <BeanCapsule color={color} position={[0, -armLen / 2, 0]} radius={limbR} length={armLen} />

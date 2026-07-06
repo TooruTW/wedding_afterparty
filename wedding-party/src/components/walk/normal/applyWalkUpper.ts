@@ -1,9 +1,10 @@
-import type { UpperBodyRefs, WalkCycle } from './types'
+import type { UpperBodyRefs } from '../../../types/pose'
+import type { WalkCycle } from '../../../types/walk'
 
 const ARM_SWING = 0.28
 const ARM_OUTWARD = 0.16
 
-export function applyWalkUpperNormal(refs: UpperBodyRefs, { swing, bob }: WalkCycle) {
+export function applyWalkUpper(refs: UpperBodyRefs, { swing, bob }: WalkCycle) {
   const { bodyRef, leftArmRef, rightArmRef } = refs
 
   if (bodyRef.current) {

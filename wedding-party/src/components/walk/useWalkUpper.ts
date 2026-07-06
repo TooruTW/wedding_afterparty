@@ -1,8 +1,9 @@
 import { useFrame } from '@react-three/fiber'
 import type { RefObject } from 'react'
-import { applyWalkUpperFrenzy } from './applyWalkUpperFrenzy'
-import { applyWalkUpperNormal } from './applyWalkUpperNormal'
-import type { UpperBodyRefs, WalkCycle, WalkStyle } from './types'
+import { applyWalkUpper as applyWalkUpperFrenzy } from './frenzy/applyWalkUpper'
+import { applyWalkUpper as applyWalkUpperNormal } from './normal/applyWalkUpper'
+import type { UpperBodyRefs } from '../../types/pose'
+import type { WalkCycle, WalkStyle } from '../../types/walk'
 
 export function useWalkUpper(
   walkStyle: WalkStyle,

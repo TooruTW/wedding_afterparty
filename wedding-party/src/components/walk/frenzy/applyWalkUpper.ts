@@ -1,6 +1,7 @@
-import type { UpperBodyRefs, WalkCycle } from './types'
+import type { UpperBodyRefs } from '../../../types/pose'
+import type { WalkCycle } from '../../../types/walk'
 
-export function applyWalkUpperFrenzy(refs: UpperBodyRefs, { swing, bob, cos }: WalkCycle) {
+export function applyWalkUpper(refs: UpperBodyRefs, { swing, bob, cos }: WalkCycle) {
   const { bodyRef, leftArmRef, rightArmRef } = refs
 
   if (bodyRef.current) {

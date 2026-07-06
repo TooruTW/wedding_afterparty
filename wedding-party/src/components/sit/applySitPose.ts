@@ -1,9 +1,11 @@
-import type { PoseRefs, SitDims } from './types'
+import type { PoseRefs, SitDims } from '../../types/pose'
 
-const LEAN_BACK = - Math.PI / 10 // 上身後傾 15°
+const LEAN_BACK = -Math.PI / 10 // 上身後傾 15°
 const LEG_FORWARD = Math.PI / 2 // 雙腿向前伸直
 const ARM_DOWN = Math.PI / 8 // 雙手向後撐地
 const ARM_OUTWARD = 0.28 // 手尖外展
+const HEAD_SWAY_SPEED = 2.2
+const HEAD_SWAY_ANGLE = 0.22 // 脖子軸左右傾倒（弧度）
 export const SIT_HIP_FORWARD = 4 // 大腿軸相對預設髖位前移（× limbR）
 export const SIT_SHOULDER_INSET = 0.72 // 坐姿肩膀橫向內收（× shoulderX）
 
@@ -36,4 +38,14 @@ export function applySitPose(refs: PoseRefs, { hipY, limbR }: SitDims) {
   }
 
   // ponytail: 靜態姿勢；坐下高度用 sitHipY 近似，未做腳尖著地校正
+}
+
+export function applySitHeadSway(
+  headRef: PoseRefs['headRef'],
+  elapsed: number,
+  phase: number,
+) {
+  if (headRef.current) {
+    headRef.current.rotation.z = Math.sin(elapsed * HEAD_SWAY_SPEED + phase) * HEAD_SWAY_ANGLE
+  }
 }

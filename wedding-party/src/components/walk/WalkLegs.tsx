@@ -1,5 +1,5 @@
 import type { RefObject } from 'react'
-import type { Pivot } from './types'
+import type { Pivot } from '../../types/pose'
 
 type WalkLegsProps = {
   color: string

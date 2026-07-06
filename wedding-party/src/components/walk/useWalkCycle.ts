@@ -1,6 +1,7 @@
 import { useFrame } from '@react-three/fiber'
 import { useRef } from 'react'
-import type { Pivot, WalkCycle } from './types'
+import type { Pivot } from '../../types/pose'
+import type { WalkCycle } from '../../types/walk'
 
 const LEG_SWING = 0.62
 
