@@ -1,7 +1,7 @@
 import { useRef } from 'react'
 import type { Body } from '../types/body'
 import type { Pivot, Pose } from '../types/pose'
-import type { WalkStyle } from '../types/walk'
+import { WALK_SPEED, type WalkStyle } from '../types/walk'
 import { useWalkCycle } from './walk/useWalkCycle'
 import { useWalkUpper } from './walk/useWalkUpper'
 import { useSitPose } from './sit/useSitPose'
@@ -11,7 +11,6 @@ import { WalkLegs } from './walk/WalkLegs'
 type BeanPersonProps = {
   body: Body
   position?: [number, number, number]
-  walkSpeed?: number
   walkStyle?: WalkStyle
   pose?: Pose
 }
@@ -77,7 +76,6 @@ function FaceMark({
 export function BeanPerson({
   body,
   position = [0, 0, 0],
-  walkSpeed = 5,
   walkStyle = 'normal',
   pose = 'stand',
 }: BeanPersonProps) {
@@ -118,6 +116,7 @@ export function BeanPerson({
 
   const walkPhase = position[0] * 0.7
   const walking = pose !== 'sit'
+  const walkSpeed = WALK_SPEED[walkStyle]
   const { cycle, leftLegRef, rightLegRef } = useWalkCycle(walkSpeed, walkPhase, 0.02 * s, walking)
   useWalkUpper(walkStyle, upperRefs, cycle, walking)
   useSitPose(pose === 'sit', { ...upperRefs, leftLegRef, rightLegRef }, { hipY, limbR }, position[0] * 0.7)
