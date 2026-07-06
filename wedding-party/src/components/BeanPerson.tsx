@@ -76,15 +76,16 @@ export function BeanPerson({
   walkSpeed = 5,
   walkStyle = 'normal',
 }: BeanPersonProps) {
-  // ponytail: 雛型固定值；僅 legHeight / headSize 對外開放
+  // ponytail: 雛型固定值；僅 headSize 對外開放
   const s = 1.2
+  const legHeight = 1.75
   const color = '#FFFFFF'
   const limbR = 0.07 * 3 * s * 0.35
   const armLen = 0.1 * 3.5 * s
   const torsoH = 0.24 * s
   const legGap = 0.03 * s
 
-  const legLen = 0.28 * s * body.legHeight
+  const legLen = 0.28 * s * legHeight
   const headR = 0.1 * 2.8 * s * body.headSize
 
   const hipY = legLen
