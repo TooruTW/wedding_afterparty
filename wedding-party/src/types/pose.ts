@@ -1,6 +1,6 @@
 import type { RefObject } from 'react'
 
-export type Pose = 'stand' | 'sit' | 'chat'
+export type Pose = 'stand' | 'sit' | 'chat' | 'listen'
 
 export type Pivot = {
   rotation: { x: number; y?: number; z: number }

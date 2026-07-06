@@ -9,6 +9,7 @@ import { useSitPose } from './sit/useSitPose'
 import { SIT_HIP_FORWARD, SIT_SHOULDER_INSET } from './sit/applySitPose'
 import { WalkLegs } from './walk/WalkLegs'
 import { useChatPose } from './chat/useChatPose'
+import { useListenPose } from './listen/useListenPose'
 
 type BeanPersonProps = {
   body: Body
@@ -165,6 +166,7 @@ export function BeanPerson({
   useWalkUpper(walkStyle, upperRefs, cycle, walking)
   useSitPose(pose === 'sit', { ...upperRefs, leftLegRef, rightLegRef }, { hipY, limbR }, position[0] * 0.7)
   useChatPose(pose === 'chat', upperRefs, position[0] * 0.4)
+  useListenPose(pose === 'listen', upperRefs, position[0] * 0.5)
 
   const hipZ = pose === 'sit' ? limbR * SIT_HIP_FORWARD : 0
 
