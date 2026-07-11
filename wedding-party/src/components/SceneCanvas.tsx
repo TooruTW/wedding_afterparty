@@ -40,6 +40,7 @@ function DanceFloor({ modeId }: { modeId: FloorModeId }) {
     }
 
     tick()
+    if (mode.intervalMs === null) return
     const id = setInterval(tick, mode.intervalMs)
     return () => clearInterval(id)
   }, [map, mode])

@@ -24,7 +24,7 @@ export const FLOOR_CANVAS_GRID: FloorGrid = {
 }
 
 export type FloorMode = {
-  intervalMs: number
+  intervalMs: number | null
   paint: (ctx: CanvasRenderingContext2D, frame: number, grid: FloorGrid) => void
 }
 
@@ -51,17 +51,48 @@ function paintTile(
 const ROWS_PER_ZONE = 2
 const ZONE_COLORS = ['#5c1a2e', '#5c4a1a', '#1a2e5c'] as const
 
+function paintZoneBands(
+  ctx: CanvasRenderingContext2D,
+  grid: FloorGrid,
+  colors: readonly string[],
+  frame = 0,
+) {
+  for (let col = 0; col < grid.cols; col++) {
+    for (let row = 0; row < grid.rows; row++) {
+      const color =
+        colors[Math.floor((row + frame) / ROWS_PER_ZONE) % colors.length]
+      paintTile(ctx, col, row, color, grid)
+    }
+  }
+}
+
 /** 紅黃藍色帶，每秒往後移 1 格 */
 const scrollingBands: FloorMode = {
   intervalMs: 1000,
   paint(ctx, frame, grid) {
+    paintZoneBands(ctx, grid, ZONE_COLORS, frame)
+  },
+}
+
+/** 開燈：暖色白光，不閃爍 */
+const lightsOn: FloorMode = {
+  intervalMs: null,
+  paint(ctx, _frame, grid) {
     for (let col = 0; col < grid.cols; col++) {
       for (let row = 0; row < grid.rows; row++) {
-        const color =
-          ZONE_COLORS[
-            Math.floor((row + frame) / ROWS_PER_ZONE) % ZONE_COLORS.length
-          ]
-        paintTile(ctx, col, row, color, grid)
+        paintTile(ctx, col, row, '#b2b1bd', grid)
+      }
+    }
+  },
+}
+
+/** 沒開燈：深灰格子，黑邊 */
+const lightsOff: FloorMode = {
+  intervalMs: null,
+  paint(ctx, _frame, grid) {
+    for (let col = 0; col < grid.cols; col++) {
+      for (let row = 0; row < grid.rows; row++) {
+        paintTile(ctx, col, row, '#1a1a1a', grid)
       }
     }
   },
@@ -69,8 +100,10 @@ const scrollingBands: FloorMode = {
 
 export const FLOOR_MODES = {
   scrollingBands,
+  lightsOn,
+  lightsOff,
 } as const satisfies Record<string, FloorMode>
 
 export type FloorModeId = keyof typeof FLOOR_MODES
 
-export const DEFAULT_FLOOR_MODE: FloorModeId = 'scrollingBands'
+export const DEFAULT_FLOOR_MODE: FloorModeId = 'lightsOn'
