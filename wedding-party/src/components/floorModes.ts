@@ -106,4 +106,4 @@ export const FLOOR_MODES = {
 
 export type FloorModeId = keyof typeof FLOOR_MODES
 
-export const DEFAULT_FLOOR_MODE: FloorModeId = 'lightsOn'
+export const DEFAULT_FLOOR_MODE: FloorModeId = 'lightsOff'
