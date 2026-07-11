@@ -15,7 +15,7 @@ const DEMO_ACTORS = [
 function App() {
   return (
     <div className="app">
-      <SceneCanvas>
+      <SceneCanvas floorMode="zoneSplit">
         {DEMO_ACTORS.map((actor, index) => (
           <ZoneActor key={index} body={DEFAULT_BODY} config={actor.config} />
         ))}
