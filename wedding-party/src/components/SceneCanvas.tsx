@@ -62,6 +62,8 @@ export function SceneCanvas({
       camera={{ position: [0, 14, 22], fov: 45 }}
       style={{ background: '#0a0a0a' }}
     >
+      <ambientLight intensity={0.55} />
+      <directionalLight position={[6, 12, 4]} intensity={1.1} />
       <DanceFloor modeId={floorMode} />
       <OrbitControls target={[0, 0, 0]} maxPolarAngle={Math.PI / 2.1} />
       {children}

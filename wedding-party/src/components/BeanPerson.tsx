@@ -10,6 +10,7 @@ import { SIT_HIP_FORWARD, SIT_SHOULDER_INSET } from './sit/applySitPose'
 import { WalkLegs } from './walk/WalkLegs'
 import { useChatPose } from './chat/useChatPose'
 import { useListenPose } from './listen/useListenPose'
+import { useToonGradient } from './useToonGradient'
 
 type BeanPersonProps = {
   body: Body
@@ -19,13 +20,19 @@ type BeanPersonProps = {
   pose?: Pose
 }
 
+function BeanToonMaterial({ color, gradientMap }: { color: string; gradientMap: ReturnType<typeof useToonGradient> }) {
+  return <meshToonMaterial color={color} gradientMap={gradientMap} />
+}
+
 function BeanCapsule({
   color,
+  gradientMap,
   position,
   radius,
   length,
 }: {
   color: string
+  gradientMap: ReturnType<typeof useToonGradient>
   position: [number, number, number]
   radius: number
   length: number
@@ -34,18 +41,20 @@ function BeanCapsule({
   return (
     <mesh position={position}>
       <capsuleGeometry args={[radius, cylinder, 12, 20]} />
-      <meshBasicMaterial color={color} />
+      <BeanToonMaterial color={color} gradientMap={gradientMap} />
     </mesh>
   )
 }
 
 function BeanPart({
   color,
+  gradientMap,
   position,
   scale,
   kind,
 }: {
   color: string
+  gradientMap: ReturnType<typeof useToonGradient>
   position: [number, number, number]
   scale: [number, number, number]
   kind: 'sphere' | 'capsule'
@@ -57,7 +66,7 @@ function BeanPart({
       ) : (
         <capsuleGeometry args={[1, 1, 8, 16]} />
       )}
-      <meshBasicMaterial color={color} />
+      <BeanToonMaterial color={color} gradientMap={gradientMap} />
     </mesh>
   )
 }
@@ -170,6 +179,7 @@ export function BeanPerson({
   useChatPose(pose === 'chat', upperRefs, position[0] * 0.4)
   useListenPose(pose === 'listen', upperRefs, position[0] * 0.5)
 
+  const toonGradient = useToonGradient()
   const hipZ = pose === 'sit' ? limbR * SIT_HIP_FORWARD : 0
 
   return (
@@ -177,6 +187,7 @@ export function BeanPerson({
       <group ref={characterRef}>
         <WalkLegs
           color={color}
+          gradientMap={toonGradient}
           leftLegRef={leftLegRef}
           rightLegRef={rightLegRef}
           leftHip={[-legX, hipY, hipZ]}
@@ -186,20 +197,20 @@ export function BeanPerson({
         />
 
         <group ref={bodyRef}>
-          <BeanPart color={color} kind="capsule" position={[0, torsoY, 0]} scale={[torsoR, torsoH / 2, torsoR * 0.65]} />
+          <BeanPart color={color} gradientMap={toonGradient} kind="capsule" position={[0, torsoY, 0]} scale={[torsoR, torsoH / 2, torsoR * 0.65]} />
 
           <group ref={headRef} position={[0, neckY, 0]}>
-            <BeanPart color={color} kind="sphere" position={[0, headOffset, 0]} scale={[headR, headR, headR]} />
+            <BeanPart color={color} gradientMap={toonGradient} kind="sphere" position={[0, headOffset, 0]} scale={[headR, headR, headR]} />
             <FaceMark headY={headOffset} headR={headR} />
             {pose === 'chat' ? <ChatBubble headY={headOffset} headR={headR} /> : null}
           </group>
 
           <group ref={leftArmRef} position={[-shoulderX, shoulderY, shoulderZ]}>
-            <BeanCapsule color={color} position={[0, -armLen / 2, 0]} radius={limbR} length={armLen} />
+            <BeanCapsule color={color} gradientMap={toonGradient} position={[0, -armLen / 2, 0]} radius={limbR} length={armLen} />
           </group>
 
           <group ref={rightArmRef} position={[shoulderX, shoulderY, shoulderZ]}>
-            <BeanCapsule color={color} position={[0, -armLen / 2, 0]} radius={limbR} length={armLen} />
+            <BeanCapsule color={color} gradientMap={toonGradient} position={[0, -armLen / 2, 0]} radius={limbR} length={armLen} />
           </group>
         </group>
       </group>
