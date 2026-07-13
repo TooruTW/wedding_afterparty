@@ -1,8 +1,13 @@
 import { useCallback, useEffect, useRef } from 'react'
 import type { Pose } from '../types/pose'
 import type { WalkStyle } from '../types/walk'
+import { liveChatPose } from './chatTurns'
 import { claimSlot, getSlotWorld, releaseSlot } from './slots'
 import { gridToWorld, ZONE_SLOTS, zoneWorldBounds, type ZoneSlot } from './zones'
+
+function slotPose(slot: ZoneSlot): Pose {
+  return slot.zoneId === 'chat' ? liveChatPose(slot.id) : slot.pose
+}
 
 function findSlotDefinition(zoneId: 'chat' | 'sit', slotId: string): ZoneSlot | undefined {
   return ZONE_SLOTS.find((slot) => slot.zoneId === zoneId && slot.id === slotId)
@@ -45,7 +50,7 @@ function buildSlotState(slot: ZoneSlot): ZoneFrameState {
   return {
     position: getSlotWorld(slot),
     rotationY: slot.rotationY,
-    pose: slot.pose,
+    pose: slotPose(slot),
     walkStyle: 'normal',
     status: 'in_zone',
   }
@@ -187,6 +192,11 @@ export function useZoneBehavior(config: ZoneBehaviorConfig) {
         positionRef.current = [nextX, 0, nextZ]
         rotationRef.current = Math.atan2(vx, vz)
         poseRef.current = 'stand'
+      } else if (
+        statusRef.current === 'in_zone' &&
+        slotRef.current?.zoneId === 'chat'
+      ) {
+        poseRef.current = liveChatPose(slotRef.current.id)
       }
 
       return {
