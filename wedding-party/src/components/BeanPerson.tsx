@@ -10,6 +10,7 @@ import { SIT_HIP_FORWARD, SIT_SHOULDER_INSET } from './sit/applySitPose'
 import { WalkLegs } from './walk/WalkLegs'
 import { useChatPose } from './chat/useChatPose'
 import { useListenPose } from './listen/useListenPose'
+import { EYES_FACE_MAP } from './beanFace'
 import { useToonGradient } from './useToonGradient'
 
 type BeanPersonProps = {
@@ -20,7 +21,13 @@ type BeanPersonProps = {
   pose?: Pose
 }
 
-function BeanToonMaterial({ color, gradientMap }: { color: string; gradientMap: ReturnType<typeof useToonGradient> }) {
+function BeanToonMaterial({
+  color,
+  gradientMap,
+}: {
+  color: string
+  gradientMap: ReturnType<typeof useToonGradient>
+}) {
   return <meshToonMaterial color={color} gradientMap={gradientMap} />
 }
 
@@ -71,17 +78,12 @@ function BeanPart({
   )
 }
 
-function FaceMark({
-  headY,
-  headR,
-}: {
-  headY: number
-  headR: number
-}) {
+function FaceMark({ headY, headR }: { headY: number; headR: number }) {
+  const size = headR * 1.15
   return (
     <mesh position={[0, headY, headR * 1.01]}>
-      <circleGeometry args={[headR * 0.28, 16]} />
-      <meshBasicMaterial color="#1a1a1a" />
+      <planeGeometry args={[size, size]} />
+      <meshBasicMaterial map={EYES_FACE_MAP} transparent depthWrite={false} />
     </mesh>
   )
 }
@@ -200,7 +202,13 @@ export function BeanPerson({
           <BeanPart color={color} gradientMap={toonGradient} kind="capsule" position={[0, torsoY, 0]} scale={[torsoR, torsoH / 2, torsoR * 0.65]} />
 
           <group ref={headRef} position={[0, neckY, 0]}>
-            <BeanPart color={color} gradientMap={toonGradient} kind="sphere" position={[0, headOffset, 0]} scale={[headR, headR, headR]} />
+            <BeanPart
+              color={color}
+              gradientMap={toonGradient}
+              kind="sphere"
+              position={[0, headOffset, 0]}
+              scale={[headR, headR, headR]}
+            />
             <FaceMark headY={headOffset} headR={headR} />
             {pose === 'chat' ? <ChatBubble headY={headOffset} headR={headR} /> : null}
           </group>
