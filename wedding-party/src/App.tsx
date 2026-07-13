@@ -1,15 +1,19 @@
 import { ZoneActor } from './components/ZoneActor'
 import { SceneCanvas } from './components/SceneCanvas'
 import { DEFAULT_BODY } from './types/body'
-import { WANDER_SPAWN_GRIDS } from './zones/zones'
+import { WANDER_SPAWN_GRIDS, ZONE_SLOTS } from './zones/zones'
 
 const DEMO_ACTORS = [
-  { config: { kind: 'slot' as const, zoneId: 'chat' as const, slotId: 'chat-a' } },
-  { config: { kind: 'slot' as const, zoneId: 'chat' as const, slotId: 'chat-b' } },
-  { config: { kind: 'slot' as const, zoneId: 'sit' as const, slotId: 'sit-a' } },
-  { config: { kind: 'slot' as const, zoneId: 'sit' as const, slotId: 'sit-b' } },
-  { config: { kind: 'wander' as const, walkStyle: 'normal' as const, spawnGrid: WANDER_SPAWN_GRIDS[0] } },
-  { config: { kind: 'wander' as const, walkStyle: 'frenzy' as const, spawnGrid: WANDER_SPAWN_GRIDS[1] } },
+  ...ZONE_SLOTS.map((slot) => ({
+    config: { kind: 'slot' as const, zoneId: slot.zoneId, slotId: slot.id },
+  })),
+  ...WANDER_SPAWN_GRIDS.map((spawnGrid) => ({
+    config: {
+      kind: 'wander' as const,
+      walkStyle: 'frenzy' as const,
+      spawnGrid,
+    },
+  })),
 ]
 
 function App() {
