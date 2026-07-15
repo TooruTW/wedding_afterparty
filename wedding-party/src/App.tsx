@@ -53,6 +53,7 @@ function App() {
           <ZoneActor
             key={guest.id}
             body={guest.body}
+            name={guest.name}
             say={saying.has(index) ? guest.say : undefined}
             config={DEMO_CONFIGS[index]!}
           />

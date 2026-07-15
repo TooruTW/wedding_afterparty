@@ -11,10 +11,12 @@ import { useChatPose } from './chat/useChatPose'
 import { useListenPose } from './listen/useListenPose'
 import { FACE_MAPS, type FaceId } from './beanFace'
 import { SaySprite } from './SaySprite'
+import { NameSprite } from './NameSprite'
 import { useToonGradient } from './useToonGradient'
 
 type BeanPersonProps = {
   body: Body
+  name: string
   say?: string
   position?: [number, number, number]
   rotationY?: number
@@ -99,6 +101,7 @@ function FaceMark({
 
 export function BeanPerson({
   body,
+  name,
   say,
   position = [0, 0, 0],
   rotationY = 0,
@@ -178,6 +181,7 @@ export function BeanPerson({
               scale={[headR, headR, headR]}
             />
             <FaceMark face={body.face} headY={headOffset} headR={headR} />
+            <NameSprite name={name} headY={headOffset} headR={headR} />
             {say ? <SaySprite text={say} headY={headOffset} headR={headR} /> : null}
           </group>
 

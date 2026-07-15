@@ -83,7 +83,7 @@ export function SaySprite({
   const { map, aspect } = useMemo(() => getSayTexture(text), [text])
   const height = 0.55
   return (
-    <sprite position={[0, headY + headR * 1.9, 0]} scale={[height * aspect, height, 1]}>
+    <sprite position={[0, headY + headR * 2.6, 0]} scale={[height * aspect, height, 1]}>
       <spriteMaterial map={map} transparent depthTest={false} />
     </sprite>
   )
