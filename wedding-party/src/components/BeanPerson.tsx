@@ -10,7 +10,7 @@ import { SIT_HIP_FORWARD, SIT_SHOULDER_INSET } from './sit/applySitPose'
 import { WalkLegs } from './walk/WalkLegs'
 import { useChatPose } from './chat/useChatPose'
 import { useListenPose } from './listen/useListenPose'
-import { EYES_FACE_MAP } from './beanFace'
+import { FACE_MAPS, type FaceId } from './beanFace'
 import { useToonGradient } from './useToonGradient'
 
 type BeanPersonProps = {
@@ -78,12 +78,20 @@ function BeanPart({
   )
 }
 
-function FaceMark({ headY, headR }: { headY: number; headR: number }) {
+function FaceMark({
+  face,
+  headY,
+  headR,
+}: {
+  face: FaceId
+  headY: number
+  headR: number
+}) {
   const size = headR * 1.15
   return (
     <mesh position={[0, headY, headR * 1.01]}>
       <planeGeometry args={[size, size]} />
-      <meshBasicMaterial map={EYES_FACE_MAP} transparent depthWrite={false} />
+      <meshBasicMaterial map={FACE_MAPS[face]} transparent depthWrite={false} />
     </mesh>
   )
 }
@@ -209,7 +217,7 @@ export function BeanPerson({
               position={[0, headOffset, 0]}
               scale={[headR, headR, headR]}
             />
-            <FaceMark headY={headOffset} headR={headR} />
+            <FaceMark face={body.face} headY={headOffset} headR={headR} />
             {pose === 'chat' ? <ChatBubble headY={headOffset} headR={headR} /> : null}
           </group>
 
