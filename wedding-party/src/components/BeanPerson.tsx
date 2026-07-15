@@ -1,4 +1,3 @@
-import { Html } from '@react-three/drei'
 import { useRef } from 'react'
 import type { Body } from '../types/body'
 import type { Pivot, Pose } from '../types/pose'
@@ -11,10 +10,12 @@ import { WalkLegs } from './walk/WalkLegs'
 import { useChatPose } from './chat/useChatPose'
 import { useListenPose } from './listen/useListenPose'
 import { FACE_MAPS, type FaceId } from './beanFace'
+import { SaySprite } from './SaySprite'
 import { useToonGradient } from './useToonGradient'
 
 type BeanPersonProps = {
   body: Body
+  say?: string
   position?: [number, number, number]
   rotationY?: number
   walkStyle?: WalkStyle
@@ -96,50 +97,9 @@ function FaceMark({
   )
 }
 
-function ChatBubble({ headY, headR }: { headY: number; headR: number }) {
-  return (
-    <Html position={[0, headY + headR * 1.85, 0]} center distanceFactor={10} sprite>
-      <div
-        style={{
-          position: 'relative',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          minWidth: 24,
-          height: 16,
-          padding: '0 6px',
-          borderRadius: 999,
-          background: '#ffffff',
-          border: '1px solid #d6d6d6',
-          opacity: 0.95,
-          color: '#1a1a1a',
-          fontSize: 10,
-          fontWeight: 700,
-          lineHeight: 1,
-          letterSpacing: 1,
-        }}
-      >
-        ...
-        <div
-          style={{
-            position: 'absolute',
-            left: '62%',
-            bottom: -4,
-            width: 6,
-            height: 6,
-            background: '#ffffff',
-            borderRight: '1px solid #d6d6d6',
-            borderBottom: '1px solid #d6d6d6',
-            transform: 'translateX(-50%) rotate(45deg)',
-          }}
-        />
-      </div>
-    </Html>
-  )
-}
-
 export function BeanPerson({
   body,
+  say,
   position = [0, 0, 0],
   rotationY = 0,
   walkStyle = 'normal',
@@ -218,7 +178,7 @@ export function BeanPerson({
               scale={[headR, headR, headR]}
             />
             <FaceMark face={body.face} headY={headOffset} headR={headR} />
-            {pose === 'chat' ? <ChatBubble headY={headOffset} headR={headR} /> : null}
+            {say ? <SaySprite text={say} headY={headOffset} headR={headR} /> : null}
           </group>
 
           <group ref={leftArmRef} position={[-shoulderX, shoulderY, shoulderZ]}>

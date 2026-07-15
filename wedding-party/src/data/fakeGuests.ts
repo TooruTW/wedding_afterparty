@@ -6,10 +6,9 @@ export type FakeGuest = {
   name: string
   /** 臉型選擇 */
   face: FaceId
-  /** 想說的一句話（先存資料，尚未接顯示） */
+  /** 想說的一句話（chat 時用 Sprite 顯示） */
   say: string
   body: Body
-  
 }
 
 const NAMES = [

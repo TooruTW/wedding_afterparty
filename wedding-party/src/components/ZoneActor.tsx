@@ -6,10 +6,11 @@ import { BeanPerson } from './BeanPerson'
 
 type ZoneActorProps = {
   body: Body
+  say?: string
   config: ZoneBehaviorConfig
 }
 
-export function ZoneActor({ body, config }: ZoneActorProps) {
+export function ZoneActor({ body, say, config }: ZoneActorProps) {
   const { init, tick } = useZoneBehavior(config)
   const [frame, setFrame] = useState(init)
 
@@ -20,6 +21,7 @@ export function ZoneActor({ body, config }: ZoneActorProps) {
   return (
     <BeanPerson
       body={body}
+      say={say}
       position={frame.position}
       rotationY={frame.rotationY}
       pose={frame.pose}
