@@ -48,7 +48,7 @@ function App() {
 
   return (
     <div className="app">
-      <SceneCanvas floorMode="zoneSplit">
+      <SceneCanvas venue="grassDay">
         {FAKE_GUESTS.map((guest, index) => (
           <ZoneActor
             key={guest.id}

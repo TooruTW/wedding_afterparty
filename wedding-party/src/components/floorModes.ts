@@ -127,11 +127,51 @@ const lightsOff: FloorMode = {
   },
 }
 
+const GRASS_BASE = '#6bc24a'
+const GRASS_DARK = '#3f8f2e'
+
+/** 約 1/23 機率深綠，斑塊分散 */
+function isSparseGrassDark(col: number, row: number) {
+  return (col * 19 + row * 37 + col * row * 3) % 23 === 0
+}
+
+function paintScatteredGrass(
+  ctx: CanvasRenderingContext2D,
+  cols: number,
+  rows: number,
+  tilePx: number,
+) {
+  for (let col = 0; col < cols; col++) {
+    for (let row = 0; row < rows; row++) {
+      ctx.fillStyle = isSparseGrassDark(col, row) ? GRASS_DARK : GRASS_BASE
+      ctx.fillRect(col * tilePx, row * tilePx, tilePx, tilePx)
+    }
+  }
+}
+
+/** 像素風草地：綠底，稀疏方塊深綠 */
+const pixelGrass: FloorMode = {
+  intervalMs: null,
+  paint(ctx, _frame, grid) {
+    paintScatteredGrass(ctx, grid.cols, grid.rows, grid.tilePx)
+  },
+}
+
+/** 大範圍草地貼圖（場地外遠處也有斑塊） */
+export function makePixelGrassDataUrl(cols = 80, rows = 80, tilePx = 16) {
+  const canvas = document.createElement('canvas')
+  canvas.width = cols * tilePx
+  canvas.height = rows * tilePx
+  paintScatteredGrass(canvas.getContext('2d')!, cols, rows, tilePx)
+  return canvas.toDataURL('image/png')
+}
+
 export const FLOOR_MODES = {
   scrollingBands,
   zoneSplit,
   lightsOn,
   lightsOff,
+  pixelGrass,
 } as const satisfies Record<string, FloorMode>
 
 export type FloorModeId = keyof typeof FLOOR_MODES
