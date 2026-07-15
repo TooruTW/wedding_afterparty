@@ -1,121 +1,65 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from './assets/vite.svg'
-import heroImg from './assets/hero.png'
-import './App.css'
+import { useEffect, useState } from 'react'
+import { ZoneActor } from './components/ZoneActor'
+import { SceneCanvas } from './components/SceneCanvas'
+import { FAKE_GUESTS } from './data/fakeGuests'
+import { WANDER_SPAWN_GRIDS, ZONE_SLOTS } from './zones/zones'
+import type { ZoneBehaviorConfig } from './zones/useZoneBehavior'
+
+/** 30 人：先填完 slot（20），剩下 10 人進 wander */
+const SLOT_CONFIGS: ZoneBehaviorConfig[] = ZONE_SLOTS.map((slot) => ({
+  kind: 'slot' as const,
+  zoneId: slot.zoneId,
+  slotId: slot.id,
+}))
+
+const WANDER_CONFIGS: ZoneBehaviorConfig[] = WANDER_SPAWN_GRIDS.slice(0, 10).map((spawnGrid) => ({
+  kind: 'wander' as const,
+  walkStyle: 'frenzy' as const,
+  spawnGrid,
+}))
+
+const DEMO_CONFIGS = [...SLOT_CONFIGS, ...WANDER_CONFIGS]
+const SAY_VISIBLE = 10
+const SAY_ROTATE_MS = 5000
+
+console.assert(
+  DEMO_CONFIGS.length === FAKE_GUESTS.length,
+  `configs ${DEMO_CONFIGS.length} != guests ${FAKE_GUESTS.length}`,
+)
+
+function pickSayIndices(count: number, total: number) {
+  const all = Array.from({ length: total }, (_, i) => i)
+  for (let i = all.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[all[i], all[j]] = [all[j]!, all[i]!]
+  }
+  return new Set(all.slice(0, Math.min(count, total)))
+}
 
 function App() {
-  const [count, setCount] = useState(0)
+  const [saying, setSaying] = useState(() => pickSayIndices(SAY_VISIBLE, FAKE_GUESTS.length))
+
+  useEffect(() => {
+    const id = setInterval(() => {
+      setSaying(pickSayIndices(SAY_VISIBLE, FAKE_GUESTS.length))
+    }, SAY_ROTATE_MS)
+    return () => clearInterval(id)
+  }, [])
 
   return (
-    <>
-      <section id="center">
-        <div className="hero">
-          <img src={heroImg} className="base" width="170" height="179" alt="" />
-          <img src={reactLogo} className="framework" alt="React logo" />
-          <img src={viteLogo} className="vite" alt="Vite logo" />
-        </div>
-        <div>
-          <h1>Get started</h1>
-          <p>
-            Edit <code>src/App.tsx</code> and save to test <code>HMR</code>
-          </p>
-        </div>
-        <button
-          type="button"
-          className="counter"
-          onClick={() => setCount((count) => count + 1)}
-        >
-          Count is {count}
-        </button>
-      </section>
-
-      <div className="ticks"></div>
-
-      <section id="next-steps">
-        <div id="docs">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#documentation-icon"></use>
-          </svg>
-          <h2>Documentation</h2>
-          <p>Your questions, answered</p>
-          <ul>
-            <li>
-              <a href="https://vite.dev/" target="_blank">
-                <img className="logo" src={viteLogo} alt="" />
-                Explore Vite
-              </a>
-            </li>
-            <li>
-              <a href="https://react.dev/" target="_blank">
-                <img className="button-icon" src={reactLogo} alt="" />
-                Learn more
-              </a>
-            </li>
-          </ul>
-        </div>
-        <div id="social">
-          <svg className="icon" role="presentation" aria-hidden="true">
-            <use href="/icons.svg#social-icon"></use>
-          </svg>
-          <h2>Connect with us</h2>
-          <p>Join the Vite community</p>
-          <ul>
-            <li>
-              <a href="https://github.com/vitejs/vite" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#github-icon"></use>
-                </svg>
-                GitHub
-              </a>
-            </li>
-            <li>
-              <a href="https://chat.vite.dev/" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#discord-icon"></use>
-                </svg>
-                Discord
-              </a>
-            </li>
-            <li>
-              <a href="https://x.com/vite_js" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#x-icon"></use>
-                </svg>
-                X.com
-              </a>
-            </li>
-            <li>
-              <a href="https://bsky.app/profile/vite.dev" target="_blank">
-                <svg
-                  className="button-icon"
-                  role="presentation"
-                  aria-hidden="true"
-                >
-                  <use href="/icons.svg#bluesky-icon"></use>
-                </svg>
-                Bluesky
-              </a>
-            </li>
-          </ul>
-        </div>
-      </section>
-
-      <div className="ticks"></div>
-      <section id="spacer"></section>
-    </>
+    <div className="app">
+      <SceneCanvas venue="grassDay">
+        {FAKE_GUESTS.map((guest, index) => (
+          <ZoneActor
+            key={guest.id}
+            body={guest.body}
+            name={guest.name}
+            say={saying.has(index) ? guest.say : undefined}
+            config={DEMO_CONFIGS[index]!}
+          />
+        ))}
+      </SceneCanvas>
+    </div>
   )
 }
 
