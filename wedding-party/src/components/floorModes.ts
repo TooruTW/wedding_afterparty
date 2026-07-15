@@ -50,7 +50,7 @@ function paintTile(
 
 const ROWS_PER_ZONE = 2
 const ZONE_COLORS = ['#5c1a2e', '#5c4a1a', '#1a2e5c'] as const
-const SLOT_ZONE_GRAY = '#b2b1bd'
+const SLOT_ZONE_GRAY = '#7a797d'
 const X_MID = FLOOR_GRID.width / 2
 const Z_MID = FLOOR_GRID.depth / 2
 const WANDER_ROW_START = Math.ceil(Z_MID - 0.5)
