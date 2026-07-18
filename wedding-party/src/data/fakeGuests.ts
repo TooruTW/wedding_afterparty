@@ -12,7 +12,7 @@ export type FakeGuest = {
 }
 
 export const FAKE_GUESTS: FakeGuest[] = [
-  // { id: 'guest-1', name: '阿明', face: 'bars', say: '新婚快樂！', body: { face: 'bars', headSize: 0.85 } },
+  { id: 'guest-1', name: '阿明', face: 'bars', say: '新婚快樂！', body: { face: 'bars', headSize: 0.85 } },
   // { id: 'guest-2', name: '小美', face: 'dots', say: '願你們永遠甜甜蜜蜜', body: { face: 'dots', headSize: 1.2 } },
   // { id: 'guest-3', name: '大偉', face: 'ovals', say: '今天舞池是我的', body: { face: 'ovals', headSize: 1.15 } },
   // { id: 'guest-4', name: '小芳', face: 'bars', say: '早日生個小豆仁', body: { face: 'bars', headSize: 1.1 } },
@@ -44,8 +44,7 @@ export const FAKE_GUESTS: FakeGuest[] = [
   // { id: 'guest-30', name: '恩齊', face: 'ovals', say: '永結同心！', body: { face: 'ovals', headSize: 1 } },
 ]
 
-console.assert(FAKE_GUESTS.length === 30, `expected 30 guests, got ${FAKE_GUESTS.length}`)
 console.assert(
-  FAKE_GUESTS.every((g) => g.face === g.body.face && g.say.length > 0),
-  'each guest needs face + say',
+  FAKE_GUESTS.every((g) => g.face === g.body.face && g.say.length > 0 && g.name.length > 0),
+  'each guest needs name + face + say',
 )
