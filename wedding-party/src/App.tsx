@@ -1,15 +1,7 @@
 import { useEffect, useState } from 'react'
-import { User } from 'lucide-react'
 import { ZoneActor } from './actors/ZoneActor'
-import { Button } from './components/ui/button'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from './components/ui/dialog'
-import { EMPTY_GUEST_FORM, GuestForm, type GuestFormValues } from './components/GuestForm'
+import { GuestDialog } from './components/GuestDialog'
+import type { GuestFormValues } from './components/GuestForm'
 import { SceneCanvas } from './scene/SceneCanvas'
 import { FAKE_GUESTS, type FakeGuest } from './data/fakeGuests'
 import { WANDER_SPAWN_GRIDS, ZONE_SLOTS } from './scene/zones/zones'
@@ -43,7 +35,6 @@ function App() {
   const [guests, setGuests] = useState<FakeGuest[]>(() => [...FAKE_GUESTS])
   const [saying, setSaying] = useState(() => pickSayIndices(SAY_VISIBLE, FAKE_GUESTS.length))
   const [dialogOpen, setDialogOpen] = useState(false)
-  const [form, setForm] = useState<GuestFormValues>(EMPTY_GUEST_FORM)
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -53,11 +44,7 @@ function App() {
   }, [guests.length])
 
   function addGuest(values: GuestFormValues) {
-    const guest: FakeGuest = {
-      id: `guest-${Date.now()}`,
-      ...values,
-    }
-    setGuests((prev) => [...prev, guest])
+    setGuests((prev) => [...prev, { id: `guest-${Date.now()}`, ...values }])
     setDialogOpen(false)
   }
 
@@ -75,29 +62,7 @@ function App() {
         ))}
       </SceneCanvas>
 
-      <Dialog
-        open={dialogOpen}
-        onOpenChange={(open) => {
-          setDialogOpen(open)
-          if (open) setForm(EMPTY_GUEST_FORM)
-        }}
-      >
-        <DialogTrigger asChild>
-          <Button
-            size="icon-lg"
-            className="fixed right-4 bottom-4 z-40 size-12 rounded-full shadow-md"
-            aria-label="開啟對話框"
-          >
-            <User className="size-6" />
-          </Button>
-        </DialogTrigger>
-        <DialogContent className="sm:max-w-2xl">
-          <DialogHeader>
-            <DialogTitle>加入賓客</DialogTitle>
-          </DialogHeader>
-          <GuestForm value={form} onChange={setForm} onSubmit={addGuest} />
-        </DialogContent>
-      </Dialog>
+      <GuestDialog open={dialogOpen} onOpenChange={setDialogOpen} onSubmit={addGuest} />
     </div>
   )
 }
