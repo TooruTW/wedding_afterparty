@@ -1,5 +1,5 @@
-import { FLOOR_GRID } from '../components/floorModes'
-import type { Pose } from '../types/pose'
+import { FLOOR_GRID } from '../floorModes'
+import type { Pose } from '../../types/pose'
 
 /** 舊版 20×10 配置等比例放大至 FLOOR_GRID（25×15），以 X/Z 中線分區 */
 const X_MID = FLOOR_GRID.width / 2

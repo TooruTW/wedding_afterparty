@@ -1,6 +1,6 @@
 import type { RefObject } from 'react'
 import type { Pivot } from '../../types/pose'
-import type { useToonGradient } from '../useToonGradient'
+import type { useToonGradient } from '../../body/useToonGradient'
 
 type WalkLegsProps = {
   color: string

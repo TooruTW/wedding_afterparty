@@ -1,8 +1,8 @@
 import { useFrame } from '@react-three/fiber'
 import { useState } from 'react'
 import type { Body } from '../types/body'
-import { useZoneBehavior, type ZoneBehaviorConfig } from '../zones/useZoneBehavior'
-import { BeanPerson } from './BeanPerson'
+import { useZoneBehavior, type ZoneBehaviorConfig } from '../scene/zones/useZoneBehavior'
+import { BeanPerson } from '../body/BeanPerson'
 
 type ZoneActorProps = {
   body: Body

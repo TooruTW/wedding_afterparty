@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
-import { ZoneActor } from './components/ZoneActor'
-import { SceneCanvas } from './components/SceneCanvas'
+import { ZoneActor } from './actors/ZoneActor'
+import { SceneCanvas } from './scene/SceneCanvas'
 import { FAKE_GUESTS } from './data/fakeGuests'
-import { WANDER_SPAWN_GRIDS, ZONE_SLOTS } from './zones/zones'
-import type { ZoneBehaviorConfig } from './zones/useZoneBehavior'
+import { WANDER_SPAWN_GRIDS, ZONE_SLOTS } from './scene/zones/zones'
+import type { ZoneBehaviorConfig } from './scene/zones/useZoneBehavior'
 
 /** 30 人：先填完 slot（20），剩下 10 人進 wander */
 const SLOT_CONFIGS: ZoneBehaviorConfig[] = ZONE_SLOTS.map((slot) => ({

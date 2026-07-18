@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react'
-import type { Pose } from '../types/pose'
-import type { WalkStyle } from '../types/walk'
+import type { Pose } from '../../types/pose'
+import type { WalkStyle } from '../../types/walk'
 import { liveChatPose } from './chatTurns'
 import { claimSlot, getSlotWorld, releaseSlot } from './slots'
 import { gridToWorld, ZONE_SLOTS, zoneWorldBounds, type ZoneSlot } from './zones'

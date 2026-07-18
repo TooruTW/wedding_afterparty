@@ -1,4 +1,4 @@
-import type { Pose } from '../types/pose'
+import type { Pose } from '../../types/pose'
 import { ZONE_SLOTS } from './zones'
 
 /** 每組輪流說話間隔 */
