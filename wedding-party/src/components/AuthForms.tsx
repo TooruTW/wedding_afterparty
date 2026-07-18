@@ -6,14 +6,24 @@ import { DialogFooter } from './ui/dialog'
 export const fieldClass =
   'h-9 w-full rounded-lg border border-input bg-transparent px-3 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
 
-/** 之後填活動名稱／時間／地點 */
 export function EventInfoSlot() {
   return (
-    <div
-      className="flex min-h-20 items-center justify-center rounded-xl border border-dashed border-foreground/20 bg-muted/40 px-3 text-sm text-muted-foreground"
-      aria-hidden
-    >
-      活動資訊
+    <div className="grid gap-3">
+      {/* 主視覺圖未定，先留 aspect-video 空位 */}
+      <div
+        className="flex aspect-video items-center justify-center rounded-xl border border-dashed border-foreground/20 bg-muted/40 text-sm text-muted-foreground"
+        aria-hidden
+      >
+        活動圖片
+      </div>
+      <div className="grid gap-1 text-sm">
+        <p>
+          <span className="font-medium">時間</span> 12/12 6:00 pm 開始
+        </p>
+        <p>場內會準備簡單飲食及酒水</p>
+        <p className="text-muted-foreground">勿空腹喝酒</p>
+        <p className="text-muted-foreground">也請注意：喝酒不開車，開車不喝酒</p>
+      </div>
     </div>
   )
 }
