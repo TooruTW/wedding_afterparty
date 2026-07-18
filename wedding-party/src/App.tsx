@@ -1,5 +1,13 @@
 import { useEffect, useState } from 'react'
+import { User } from 'lucide-react'
 import { ZoneActor } from './actors/ZoneActor'
+import { Button } from './components/ui/button'
+import {
+  Dialog,
+  DialogContent,
+  DialogTitle,
+  DialogTrigger,
+} from './components/ui/dialog'
 import { SceneCanvas } from './scene/SceneCanvas'
 import { FAKE_GUESTS } from './data/fakeGuests'
 import { WANDER_SPAWN_GRIDS, ZONE_SLOTS } from './scene/zones/zones'
@@ -38,6 +46,7 @@ function pickSayIndices(count: number, total: number) {
 
 function App() {
   const [saying, setSaying] = useState(() => pickSayIndices(SAY_VISIBLE, FAKE_GUESTS.length))
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -48,7 +57,7 @@ function App() {
 
   return (
     <div className="app">
-      <SceneCanvas venue="grassDay">
+      <SceneCanvas venue="grassDay" paused={dialogOpen}>
         {FAKE_GUESTS.map((guest, index) => (
           <ZoneActor
             key={guest.id}
@@ -59,6 +68,23 @@ function App() {
           />
         ))}
       </SceneCanvas>
+
+      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+        <DialogTrigger asChild>
+          <Button
+            size="icon-lg"
+            className="fixed right-4 bottom-4 z-40 size-12 rounded-full shadow-md"
+            aria-label="開啟對話框"
+          >
+            <User className="size-6" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent>
+          <DialogTitle asChild>
+            <h1>這是 dialog</h1>
+          </DialogTitle>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
