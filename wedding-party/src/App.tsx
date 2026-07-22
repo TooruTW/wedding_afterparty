@@ -43,8 +43,11 @@ function App() {
     return () => clearInterval(id)
   }, [guests.length])
 
-  function addGuest(values: GuestFormValues) {
-    setGuests((prev) => [...prev, { id: `guest-${Date.now()}`, ...values }])
+  function addGuests(values: GuestFormValues[]) {
+    setGuests((prev) => [
+      ...prev,
+      ...values.map((v) => ({ id: `guest-${crypto.randomUUID()}`, ...v })),
+    ])
     setDialogOpen(false)
   }
 
@@ -62,7 +65,7 @@ function App() {
         ))}
       </SceneCanvas>
 
-      <GuestDialog open={dialogOpen} onOpenChange={setDialogOpen} onSubmit={addGuest} />
+      <GuestDialog open={dialogOpen} onOpenChange={setDialogOpen} onSubmit={addGuests} />
     </div>
   )
 }

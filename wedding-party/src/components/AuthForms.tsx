@@ -1,5 +1,6 @@
 import type { FormEvent } from 'react'
 import { useState } from 'react'
+import { PARTY_SIZE_MAX, parsePartySize } from '../lib/characterDrafts'
 import { Button } from './ui/button'
 import { DialogFooter } from './ui/dialog'
 
@@ -85,6 +86,8 @@ export type RegisterFormValues = {
   phone: string
   drinks: boolean
   diet: string
+  /** 同一手機帳號下的出席人數（含本人），正整數 */
+  partySize: number
 }
 
 const EMPTY_REGISTER: RegisterFormValues = {
@@ -93,6 +96,7 @@ const EMPTY_REGISTER: RegisterFormValues = {
   phone: '',
   drinks: false,
   diet: '',
+  partySize: 1,
 }
 
 type RegisterFormProps = {
@@ -102,7 +106,10 @@ type RegisterFormProps = {
 
 export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
   const [form, setForm] = useState<RegisterFormValues>(EMPTY_REGISTER)
+  // 輸入框以字串保存，才能擋空值與小數
+  const [partySizeText, setPartySizeText] = useState('1')
   const [nameError, setNameError] = useState('')
+  const [partySizeError, setPartySizeError] = useState('')
 
   function handleSubmit(e: FormEvent) {
     e.preventDefault()
@@ -114,6 +121,12 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
       return
     }
     setNameError('')
+    const partySize = parsePartySize(partySizeText)
+    if (partySize === null) {
+      setPartySizeError(`出席人數需為 1 到 ${PARTY_SIZE_MAX} 的整數`)
+      return
+    }
+    setPartySizeError('')
     console.assert(phone.length > 0, 'register phone required')
     onSuccess({
       realName,
@@ -121,6 +134,7 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
       phone,
       drinks: form.drinks,
       diet: form.diet.trim(),
+      partySize,
     })
   }
 
@@ -175,6 +189,35 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
             className={fieldClass}
           />
         </label>
+
+        <label className="grid gap-1">
+          <span className="text-muted-foreground">出席人數（含本人）</span>
+          <input
+            required
+            name="partySize"
+            type="number"
+            inputMode="numeric"
+            min={1}
+            max={PARTY_SIZE_MAX}
+            step={1}
+            value={partySizeText}
+            onChange={(e) => {
+              setPartySizeError('')
+              setPartySizeText(e.target.value)
+            }}
+            aria-invalid={partySizeError ? true : undefined}
+            aria-describedby="party-size-hint"
+            className={fieldClass}
+          />
+          <span id="party-size-hint" className="text-xs text-muted-foreground">
+            1 到 {PARTY_SIZE_MAX} 人，共用這支手機號碼
+          </span>
+        </label>
+        {partySizeError ? (
+          <p className="text-xs text-destructive" role="alert">
+            {partySizeError}
+          </p>
+        ) : null}
 
         <fieldset className="grid gap-2">
           <legend className="text-muted-foreground">是否喝酒</legend>
