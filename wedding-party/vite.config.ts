@@ -11,4 +11,7 @@ export default defineConfig({
       '@': path.resolve(__dirname, './src'),
     },
   },
+  server: {
+    host: true, // listen on LAN so phone/other devices can connect via WiFi
+  },
 })
