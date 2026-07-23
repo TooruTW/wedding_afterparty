@@ -1,31 +1,25 @@
 import { useEffect, useState } from 'react'
-import { ZoneActor } from './components/ZoneActor'
-import { SceneCanvas } from './components/SceneCanvas'
-import { FAKE_GUESTS } from './data/fakeGuests'
-import { WANDER_SPAWN_GRIDS, ZONE_SLOTS } from './zones/zones'
-import type { ZoneBehaviorConfig } from './zones/useZoneBehavior'
+import { ZoneActor } from './actors/ZoneActor'
+import { GuestDialog } from './components/GuestDialog'
+import type { GuestFormValues } from './components/GuestForm'
+import { SceneCanvas } from './scene/SceneCanvas'
+import { FAKE_GUESTS, type FakeGuest } from './data/fakeGuests'
+import { WANDER_SPAWN_GRIDS, ZONE_SLOTS } from './scene/zones/zones'
+import type { ZoneBehaviorConfig } from './scene/zones/useZoneBehavior'
 
-/** 30 人：先填完 slot（20），剩下 10 人進 wander */
-const SLOT_CONFIGS: ZoneBehaviorConfig[] = ZONE_SLOTS.map((slot) => ({
-  kind: 'slot' as const,
-  zoneId: slot.zoneId,
-  slotId: slot.id,
-}))
-
-const WANDER_CONFIGS: ZoneBehaviorConfig[] = WANDER_SPAWN_GRIDS.slice(0, 10).map((spawnGrid) => ({
-  kind: 'wander' as const,
-  walkStyle: 'frenzy' as const,
-  spawnGrid,
-}))
-
-const DEMO_CONFIGS = [...SLOT_CONFIGS, ...WANDER_CONFIGS]
 const SAY_VISIBLE = 10
 const SAY_ROTATE_MS = 5000
 
-console.assert(
-  DEMO_CONFIGS.length === FAKE_GUESTS.length,
-  `configs ${DEMO_CONFIGS.length} != guests ${FAKE_GUESTS.length}`,
-)
+/** 先填 slot，多出來的進 wander（spawn 循環用） */
+function configForIndex(index: number): ZoneBehaviorConfig {
+  if (index < ZONE_SLOTS.length) {
+    const slot = ZONE_SLOTS[index]!
+    return { kind: 'slot', zoneId: slot.zoneId, slotId: slot.id }
+  }
+  const spawn =
+    WANDER_SPAWN_GRIDS[(index - ZONE_SLOTS.length) % WANDER_SPAWN_GRIDS.length]!
+  return { kind: 'wander', walkStyle: 'frenzy', spawnGrid: spawn }
+}
 
 function pickSayIndices(count: number, total: number) {
   const all = Array.from({ length: total }, (_, i) => i)
@@ -37,28 +31,41 @@ function pickSayIndices(count: number, total: number) {
 }
 
 function App() {
+  // ponytail: 暫存於記憶體；重整即回 FAKE_GUESTS 種子
+  const [guests, setGuests] = useState<FakeGuest[]>(() => [...FAKE_GUESTS])
   const [saying, setSaying] = useState(() => pickSayIndices(SAY_VISIBLE, FAKE_GUESTS.length))
+  const [dialogOpen, setDialogOpen] = useState(false)
 
   useEffect(() => {
     const id = setInterval(() => {
-      setSaying(pickSayIndices(SAY_VISIBLE, FAKE_GUESTS.length))
+      setSaying(pickSayIndices(SAY_VISIBLE, guests.length))
     }, SAY_ROTATE_MS)
     return () => clearInterval(id)
-  }, [])
+  }, [guests.length])
+
+  function addGuests(values: GuestFormValues[]) {
+    setGuests((prev) => [
+      ...prev,
+      ...values.map((v) => ({ id: `guest-${crypto.randomUUID()}`, ...v })),
+    ])
+    setDialogOpen(false)
+  }
 
   return (
     <div className="app">
-      <SceneCanvas venue="grassDay">
-        {FAKE_GUESTS.map((guest, index) => (
+      <SceneCanvas venue="grassDay" paused={dialogOpen}>
+        {guests.map((guest, index) => (
           <ZoneActor
             key={guest.id}
             body={guest.body}
             name={guest.name}
             say={saying.has(index) ? guest.say : undefined}
-            config={DEMO_CONFIGS[index]!}
+            config={configForIndex(index)}
           />
         ))}
       </SceneCanvas>
+
+      <GuestDialog open={dialogOpen} onOpenChange={setDialogOpen} onSubmit={addGuests} />
     </div>
   )
 }

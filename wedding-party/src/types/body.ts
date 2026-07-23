@@ -1,4 +1,4 @@
-import { DEFAULT_FACE, type FaceId } from '../components/beanFace'
+import { DEFAULT_FACE, type FaceId } from '../body/beanFace'
 
 /** 雛型：頭大小 + 臉型 */
 export type Body = {

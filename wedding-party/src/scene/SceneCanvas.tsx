@@ -16,6 +16,8 @@ import { DEFAULT_VENUE, VENUE_THEMES, type VenueThemeId } from './venueThemes'
 type SceneCanvasProps = {
   children?: ReactNode
   venue?: VenueThemeId
+  /** dialog 開啟時凍結畫面（人物移動／姿勢動畫） */
+  paused?: boolean
 }
 
 function createFloorCanvas() {
@@ -88,6 +90,7 @@ function PixelGrassField({ size }: { size: number }) {
 export function SceneCanvas({
   children,
   venue = DEFAULT_VENUE,
+  paused = false,
 }: SceneCanvasProps) {
   const theme = VENUE_THEMES[venue]
   const wideGrass =
@@ -97,6 +100,7 @@ export function SceneCanvas({
     <Canvas
       camera={{ position: [0, 14, 22], fov: 45 }}
       style={{ background: theme.canvasBackground }}
+      frameloop={paused ? 'never' : 'always'}
     >
       <ambientLight intensity={0.55} />
       <directionalLight position={[6, 12, 4]} intensity={1.1} />
