@@ -7,21 +7,17 @@ import {
   accountsIndexFromAccounts,
   charactersFromAccounts,
   fetchAccounts,
+  postLogin,
+  type Account,
   type AccountIndex,
 } from './data/accounts'
 import type { FakeGuest } from './data/fakeGuests'
+import { clearAuthSession, getAuthSession, saveAuthSession } from './lib/authSession'
 import { WANDER_SPAWN_GRIDS, ZONE_SLOTS } from './scene/zones/zones'
 import type { ZoneBehaviorConfig } from './scene/zones/useZoneBehavior'
 
 const SAY_VISIBLE = 10
 const SAY_ROTATE_MS = 5000
-
-/** ponytail: 假資料預覽多人角色編輯狀態；正式上線移除此常數與 seedGuests prop */
-const FAKE_PARTY: GuestFormValues[] = [
-  { name: '阿明', face: 'bars', say: '新婚快樂！', body: { face: 'bars', headSize: 0.85 } },
-  { name: '小美', face: 'dots', say: '甜甜蜜蜜', body: { face: 'dots', headSize: 1.2 } },
-  { name: '大偉', face: 'ovals', say: '舞池是我的', body: { face: 'ovals', headSize: 1.15 } },
-]
 
 /** 先填 slot，多出來的進 wander（spawn 循環用） */
 function configForIndex(index: number): ZoneBehaviorConfig {
@@ -43,23 +39,64 @@ function pickSayIndices(count: number, total: number) {
   return new Set(all.slice(0, Math.min(count, total)))
 }
 
+function formValuesFromAccount(account: Account): GuestFormValues[] {
+  return account.characters.map((character) => ({
+    name: character.name,
+    face: character.eyeStyle,
+    say: character.message,
+    body: { face: character.eyeStyle, headSize: character.headSize },
+  }))
+}
+
 function App() {
-  // ponytail: 種子改走 fetchAccounts；重整會再打一次模擬 API
   const [guests, setGuests] = useState<FakeGuest[]>([])
-  // ponytail: 帳號索引先寫入；之後登入用 phone 查 characterIds 再打開綁定
   const [, setAccountIndex] = useState<AccountIndex[]>([])
+  const [seedGuests, setSeedGuests] = useState<GuestFormValues[]>()
   const [saying, setSaying] = useState(() => new Set<number>())
   const [dialogOpen, setDialogOpen] = useState(false)
 
+  async function loadAccountsFor(phone: string) {
+    const accounts = await fetchAccounts()
+    const account = accounts.find((item) => item.phone === phone)
+    if (!account) throw new Error('找不到這個手機號碼')
+
+    const next = charactersFromAccounts(accounts)
+    const ownCharacters = formValuesFromAccount(account)
+    setGuests(next)
+    setAccountIndex(accountsIndexFromAccounts(accounts))
+    setSeedGuests(ownCharacters)
+    setSaying(pickSayIndices(SAY_VISIBLE, next.length))
+    return ownCharacters
+  }
+
+  async function handleLogin(phone: string) {
+    await postLogin({ phone })
+    const ownCharacters = await loadAccountsFor(phone)
+    saveAuthSession(phone)
+    return ownCharacters
+  }
+
   useEffect(() => {
+    const session = getAuthSession()
+    if (!session) return
     let cancelled = false
-    fetchAccounts().then((accounts) => {
-      if (cancelled) return
-      const next = charactersFromAccounts(accounts)
-      setGuests(next)
-      setAccountIndex(accountsIndexFromAccounts(accounts))
-      setSaying(pickSayIndices(SAY_VISIBLE, next.length))
-    })
+    fetchAccounts()
+      .then((accounts) => {
+        if (cancelled) return
+        const account = accounts.find((item) => item.phone === session.phone)
+        if (!account) {
+          clearAuthSession()
+          return
+        }
+        const next = charactersFromAccounts(accounts)
+        setGuests(next)
+        setAccountIndex(accountsIndexFromAccounts(accounts))
+        setSeedGuests(formValuesFromAccount(account))
+        setSaying(pickSayIndices(SAY_VISIBLE, next.length))
+      })
+      .catch(() => {
+        if (!cancelled) clearAuthSession()
+      })
     return () => {
       cancelled = true
     }
@@ -98,7 +135,8 @@ function App() {
         open={dialogOpen}
         onOpenChange={setDialogOpen}
         onSubmit={addGuests}
-        seedGuests={FAKE_PARTY}
+        onLogin={handleLogin}
+        seedGuests={seedGuests}
       />
     </div>
   )

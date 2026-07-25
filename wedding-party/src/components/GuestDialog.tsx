@@ -37,6 +37,7 @@ type GuestDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (guests: GuestFormValues[]) => void
+  onLogin: (phone: string) => Promise<GuestFormValues[]>
   /** 給定時跳過登入，直接以這些角色開在「角色設定」頁（假資料預覽多人狀態用） */
   seedGuests?: GuestFormValues[]
 }
@@ -51,7 +52,7 @@ function isDraftComplete(values: GuestFormValues) {
   return values.name.trim().length > 0 && values.say.trim().length > 0
 }
 
-export function GuestDialog({ open, onOpenChange, onSubmit, seedGuests }: GuestDialogProps) {
+export function GuestDialog({ open, onOpenChange, onSubmit, onLogin, seedGuests }: GuestDialogProps) {
   function seededDrafts(): Draft<GuestFormValues>[] {
     return (seedGuests ?? []).map((values) => ({ id: crypto.randomUUID(), values }))
   }
@@ -69,6 +70,15 @@ export function GuestDialog({ open, onOpenChange, onSubmit, seedGuests }: GuestD
     const next = makeDrafts(partySize, () => ({ ...EMPTY_GUEST_FORM }))
     setDrafts(next)
     setSelectedId(next[0]!.id)
+    setSubmitError('')
+    setPage('guest')
+  }
+
+  async function handleLogin(phone: string) {
+    const values = await onLogin(phone)
+    const next = values.map((value) => ({ id: crypto.randomUUID(), values: value }))
+    setDrafts(next)
+    setSelectedId(next[0]?.id ?? '')
     setSubmitError('')
     setPage('guest')
   }
@@ -135,7 +145,7 @@ export function GuestDialog({ open, onOpenChange, onSubmit, seedGuests }: GuestD
         {page === 'login' || page === 'register' ? <EventInfoSlot /> : null}
 
         {page === 'login' ? (
-          <LoginForm onGoRegister={() => setPage('register')} onSuccess={() => startGuestPage(1)} />
+          <LoginForm onGoRegister={() => setPage('register')} onSuccess={handleLogin} />
         ) : null}
 
         {page === 'register' ? (

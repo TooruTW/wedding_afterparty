@@ -27,6 +27,15 @@ export async function fetchAccounts(): Promise<Account[]> {
   return (await res.json()) as Account[]
 }
 
+/** ponytail: 模擬 POST /login；正式版由後端查詢帳號且不應下載全部帳號。 */
+export async function postLogin(payload: { phone: string }): Promise<void> {
+  await new Promise((r) => setTimeout(r, 200))
+  const accounts = await fetchAccounts()
+  if (!accounts.some((account) => account.phone === payload.phone)) {
+    throw new Error('找不到這個手機號碼')
+  }
+}
+
 /** 帳號摘要：手機資料 + 擁有的角色 id（不含角色本體） */
 export type AccountIndex = {
   id: string

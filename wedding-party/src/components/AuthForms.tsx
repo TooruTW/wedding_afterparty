@@ -62,19 +62,28 @@ export function EventInfoSlot() {
 
 type LoginFormProps = {
   onGoRegister: () => void
-  onSuccess: () => void
+  onSuccess: (phone: string) => Promise<void>
 }
 
 export function LoginForm({ onGoRegister, onSuccess }: LoginFormProps) {
   const [phone, setPhone] = useState('')
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     const trimmed = phone.trim()
     console.assert(trimmed.length > 0, 'login phone required')
     if (!trimmed) return
-    // ponytail: 尚無後端；先通過驗證就進下一頁
-    onSuccess()
+    setError('')
+    setSubmitting(true)
+    try {
+      await onSuccess(trimmed)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '登入失敗，請稍後再試')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -88,13 +97,22 @@ export function LoginForm({ onGoRegister, onSuccess }: LoginFormProps) {
           inputMode="tel"
           autoComplete="tel"
           value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          onChange={(e) => {
+            setError('')
+            setPhone(e.target.value)
+          }}
+          aria-invalid={error ? true : undefined}
           className={fieldClass}
         />
       </label>
+      {error ? (
+        <p className="text-xs text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
       <DialogFooter>
-        <Button type="submit" className="w-full sm:w-auto">
-          登入
+        <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
+          {submitting ? '登入中…' : '登入'}
         </Button>
       </DialogFooter>
       <p className="text-center text-sm text-muted-foreground">
