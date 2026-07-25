@@ -4,7 +4,6 @@ import { Tabs } from 'radix-ui'
 import {
   draftLabel,
   makeDrafts,
-  removeDraft,
   updateDraft,
   type Draft,
 } from '../lib/characterDrafts'
@@ -15,7 +14,6 @@ import { Button } from './ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -37,8 +35,9 @@ type GuestDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (guests: GuestFormValues[]) => void
-  onLogin: (phone: string) => Promise<GuestFormValues[]>
-  /** 給定時跳過登入，直接以這些角色開在「角色設定」頁（假資料預覽多人狀態用） */
+  onLogin: (email: string) => Promise<GuestFormValues[]>
+  onLogout: () => void
+  /** 登入後帶入自己的角色；未登入時為空 */
   seedGuests?: GuestFormValues[]
 }
 
@@ -52,7 +51,14 @@ function isDraftComplete(values: GuestFormValues) {
   return values.name.trim().length > 0 && values.say.trim().length > 0
 }
 
-export function GuestDialog({ open, onOpenChange, onSubmit, onLogin, seedGuests }: GuestDialogProps) {
+export function GuestDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+  onLogin,
+  onLogout,
+  seedGuests,
+}: GuestDialogProps) {
   function seededDrafts(): Draft<GuestFormValues>[] {
     return (seedGuests ?? []).map((values) => ({ id: crypto.randomUUID(), values }))
   }
@@ -61,7 +67,6 @@ export function GuestDialog({ open, onOpenChange, onSubmit, onLogin, seedGuests 
   const [page, setPage] = useState<DialogPage>(initialDrafts.length ? 'guest' : 'login')
   const [drafts, setDrafts] = useState<Draft<GuestFormValues>[]>(initialDrafts)
   const [selectedId, setSelectedId] = useState(initialDrafts[0]?.id ?? '')
-  const [confirmOpen, setConfirmOpen] = useState(false)
   const [submitError, setSubmitError] = useState('')
 
   const selected = drafts.find((d) => d.id === selectedId)
@@ -74,13 +79,21 @@ export function GuestDialog({ open, onOpenChange, onSubmit, onLogin, seedGuests 
     setPage('guest')
   }
 
-  async function handleLogin(phone: string) {
-    const values = await onLogin(phone)
+  async function handleLogin(email: string) {
+    const values = await onLogin(email)
     const next = values.map((value) => ({ id: crypto.randomUUID(), values: value }))
     setDrafts(next)
     setSelectedId(next[0]?.id ?? '')
     setSubmitError('')
     setPage('guest')
+  }
+
+  function handleLogout() {
+    onLogout()
+    setDrafts([])
+    setSelectedId('')
+    setSubmitError('')
+    setPage('login')
   }
 
   function resetAndClose(nextOpen: boolean) {
@@ -90,7 +103,6 @@ export function GuestDialog({ open, onOpenChange, onSubmit, onLogin, seedGuests 
       setPage(seeded.length ? 'guest' : 'login')
       setDrafts(seeded)
       setSelectedId(seeded[0]?.id ?? '')
-      setConfirmOpen(false)
       setSubmitError('')
     }
   }
@@ -111,13 +123,6 @@ export function GuestDialog({ open, onOpenChange, onSubmit, onLogin, seedGuests 
       return
     }
     onSubmit(all.map((d) => d.values))
-  }
-
-  function handleDeleteConfirmed() {
-    const result = removeDraft(drafts, selectedId)
-    setDrafts(result.drafts)
-    setSelectedId(result.selectedId)
-    setConfirmOpen(false)
   }
 
   return (
@@ -183,39 +188,15 @@ export function GuestDialog({ open, onOpenChange, onSubmit, onLogin, seedGuests 
                   {submitError}
                 </p>
               ) : null}
-
-              {drafts.length > 1 ? (
-                <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="mx-auto text-muted-foreground"
-                    >
-                      刪除這位角色
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-sm">
-                    <DialogHeader>
-                      <DialogTitle>
-                        刪除「{draftLabel(selected.values.name, drafts.indexOf(selected))}」？
-                      </DialogTitle>
-                    </DialogHeader>
-                    <p className="text-sm text-muted-foreground">
-                      這位角色的設定會被移除，無法復原。
-                    </p>
-                    <DialogFooter>
-                      <Button type="button" variant="outline" onClick={() => setConfirmOpen(false)}>
-                        取消
-                      </Button>
-                      <Button type="button" variant="destructive" onClick={handleDeleteConfirmed}>
-                        確認刪除
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              ) : null}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mx-auto text-muted-foreground"
+                onClick={handleLogout}
+              >
+                登出
+              </Button>
             </Tabs.Content>
           </Tabs.Root>
         ) : null}

@@ -3,7 +3,7 @@ const SESSION_TTL_MS = 72 * 60 * 60 * 1000
 
 export type AuthSession = {
   loggedIn: true
-  phone: string
+  email: string
   expiresAt: number
 }
 
@@ -14,10 +14,10 @@ function scheduleRemoval(expiresAt: number) {
   expiryTimer = setTimeout(clearAuthSession, Math.max(0, expiresAt - Date.now()))
 }
 
-export function saveAuthSession(phone: string): AuthSession {
+export function saveAuthSession(email: string): AuthSession {
   const session: AuthSession = {
     loggedIn: true,
-    phone,
+    email,
     expiresAt: Date.now() + SESSION_TTL_MS,
   }
   localStorage.setItem(STORAGE_KEY, JSON.stringify(session))
@@ -30,7 +30,7 @@ export function getAuthSession(): AuthSession | null {
     const session = JSON.parse(localStorage.getItem(STORAGE_KEY) ?? 'null') as Partial<AuthSession> | null
     if (
       session?.loggedIn !== true ||
-      typeof session.phone !== 'string' ||
+      typeof session.email !== 'string' ||
       typeof session.expiresAt !== 'number' ||
       session.expiresAt <= Date.now()
     ) {

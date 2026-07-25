@@ -9,9 +9,10 @@ export type Character = {
   message: string
 }
 
+/** 帳號本體；characters 只在「自己的帳號」回應裡出現，不會塞別人的 email */
 export type Account = {
   id: string
-  phone: string
+  email: string
   realName: string
   nickname: string
   drinks: boolean
@@ -19,84 +20,56 @@ export type Account = {
   characters: Character[]
 }
 
-/** ponytail: 模擬 API；之後換成真實 endpoint 即可 */
-export async function fetchAccounts(): Promise<Account[]> {
+/** 公開場資料：後端 JOIN characters 即可，不含帳號個資 */
+export async function fetchCharacters(): Promise<Character[]> {
+  await new Promise((r) => setTimeout(r, 200))
+  const res = await fetch(new URL('./characters.json', import.meta.url))
+  if (!res.ok) throw new Error(`fetch characters failed: ${res.status}`)
+  return (await res.json()) as Character[]
+}
+
+/**
+ * ponytail: 模擬 POST /login → 只回自己的 Account。
+ * 正式版後端用 email 查一筆；mock 仍讀 accounts.json，勿當成可公開下載。
+ */
+export async function postLogin(payload: { email: string }): Promise<Account> {
   await new Promise((r) => setTimeout(r, 200))
   const res = await fetch(new URL('./accounts.json', import.meta.url))
-  if (!res.ok) throw new Error(`fetch accounts failed: ${res.status}`)
-  return (await res.json()) as Account[]
+  if (!res.ok) throw new Error(`login failed: ${res.status}`)
+  const accounts = (await res.json()) as Account[]
+  const account = accounts.find((item) => item.email === payload.email)
+  if (!account) throw new Error('找不到這個 Email')
+  return account
 }
 
-/** ponytail: 模擬 POST /login；正式版由後端查詢帳號且不應下載全部帳號。 */
-export async function postLogin(payload: { phone: string }): Promise<void> {
-  await new Promise((r) => setTimeout(r, 200))
-  const accounts = await fetchAccounts()
-  if (!accounts.some((account) => account.phone === payload.phone)) {
-    throw new Error('找不到這個手機號碼')
-  }
+export function charactersToGuests(characters: Character[]): FakeGuest[] {
+  return characters.map((c) => ({
+    id: c.id,
+    name: c.name,
+    face: c.eyeStyle,
+    say: c.message,
+    body: { face: c.eyeStyle, headSize: c.headSize },
+  }))
 }
 
-/** 帳號摘要：手機資料 + 擁有的角色 id（不含角色本體） */
-export type AccountIndex = {
-  id: string
-  phone: string
-  realName: string
-  nickname: string
-  drinks: boolean
-  diet: string
-  characterIds: string[]
-}
-
-/** 整組帳號 → 場上要渲染的角色陣列 */
-export function charactersFromAccounts(accounts: Account[]): FakeGuest[] {
-  return accounts.flatMap((account) =>
-    account.characters.map((c) => ({
-      id: c.id,
-      name: c.name,
-      face: c.eyeStyle,
-      say: c.message,
-      body: { face: c.eyeStyle, headSize: c.headSize },
-    })),
-  )
-}
-
-/** 整組帳號 → 帳號索引（角色只留 id） */
-export function accountsIndexFromAccounts(accounts: Account[]): AccountIndex[] {
-  return accounts.map((account) => ({
-    id: account.id,
-    phone: account.phone,
-    realName: account.realName,
-    nickname: account.nickname,
-    drinks: account.drinks,
-    diet: account.diet,
-    characterIds: account.characters.map((c) => c.id),
+export function accountToFormValues(account: Account) {
+  return account.characters.map((c) => ({
+    name: c.name,
+    face: c.eyeStyle,
+    say: c.message,
+    body: { face: c.eyeStyle, headSize: c.headSize },
   }))
 }
 
 {
-  const sample: Account = {
-    id: 'x',
-    phone: '09',
-    realName: '',
-    nickname: '',
-    drinks: false,
-    diet: '',
-    characters: [
-      {
-        id: 'c',
-        eyeStyle: 'bars',
-        headSize: 1,
-        name: '測',
-        message: '試',
-      },
-    ],
+  const sample: Character = {
+    id: 'c',
+    eyeStyle: 'bars',
+    headSize: 1,
+    name: '測',
+    message: '試',
   }
-  const guests = charactersFromAccounts([sample])
-  console.assert(guests.length === 1 && guests[0]!.face === 'bars', 'flatten keeps eyeStyle as face')
+  const guests = charactersToGuests([sample])
+  console.assert(guests.length === 1 && guests[0]!.face === 'bars', 'character maps to guest face')
   console.assert(FACE_IDS.includes('bars'), 'eyeStyle must be a FaceId')
-  const index = accountsIndexFromAccounts([sample])
-  console.assert(
-    index.length === 1 && index[0]!.phone === '09' && index[0]!.characterIds[0] === 'c',
-    'account index keeps phone + character ids',
-  )
 }

@@ -62,18 +62,18 @@ export function EventInfoSlot() {
 
 type LoginFormProps = {
   onGoRegister: () => void
-  onSuccess: (phone: string) => Promise<void>
+  onSuccess: (email: string) => Promise<void>
 }
 
 export function LoginForm({ onGoRegister, onSuccess }: LoginFormProps) {
-  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
   const [error, setError] = useState('')
   const [submitting, setSubmitting] = useState(false)
 
   async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    const trimmed = phone.trim()
-    console.assert(trimmed.length > 0, 'login phone required')
+    const trimmed = email.trim()
+    console.assert(trimmed.length > 0, 'login email required')
     if (!trimmed) return
     setError('')
     setSubmitting(true)
@@ -89,17 +89,17 @@ export function LoginForm({ onGoRegister, onSuccess }: LoginFormProps) {
   return (
     <form className="flex flex-col justify-between gap-1" onSubmit={handleSubmit}>
       <label className="grid gap-1">
-        <span className="text-muted-foreground">手機號碼</span>
+        <span className="text-muted-foreground">Email</span>
         <input
           required
-          name="phone"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          value={phone}
+          name="email"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          value={email}
           onChange={(e) => {
             setError('')
-            setPhone(e.target.value)
+            setEmail(e.target.value)
           }}
           aria-invalid={error ? true : undefined}
           className={fieldClass}
@@ -132,17 +132,17 @@ export function LoginForm({ onGoRegister, onSuccess }: LoginFormProps) {
 export type RegisterFormValues = {
   realName: string
   nickname: string
-  phone: string
+  email: string
   drinks: boolean
   diet: string
-  /** 同一手機帳號下的出席人數（含本人），正整數 */
+  /** 同一 email 帳號下的出席人數（含本人），正整數 */
   partySize: number
 }
 
 const EMPTY_REGISTER: RegisterFormValues = {
   realName: '',
   nickname: '',
-  phone: '',
+  email: '',
   drinks: false,
   diet: '',
   partySize: 1,
@@ -164,7 +164,7 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
     e.preventDefault()
     const realName = form.realName.trim()
     const nickname = form.nickname.trim()
-    const phone = form.phone.trim()
+    const email = form.email.trim()
     if (!realName && !nickname) {
       setNameError('真實姓名與綽號請擇一填寫')
       return
@@ -176,11 +176,11 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
       return
     }
     setPartySizeError('')
-    console.assert(phone.length > 0, 'register phone required')
+    console.assert(email.length > 0, 'register email required')
     onSuccess({
       realName,
       nickname,
-      phone,
+      email,
       drinks: form.drinks,
       diet: form.diet.trim(),
       partySize,
@@ -226,15 +226,17 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
         ) : null}
 
         <label className="grid gap-1">
-          <span className="text-muted-foreground">手機號碼</span>
+          <span className="text-muted-foreground">
+            Email <span className="text-xs">（僅用於登入）</span>
+          </span>
           <input
             required
-            name="phone"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            value={form.phone}
-            onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
+            name="email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            value={form.email}
+            onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
             className={fieldClass}
           />
         </label>
@@ -259,7 +261,7 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
             className={fieldClass}
           />
           <span id="party-size-hint" className="text-xs text-muted-foreground">
-            1 到 {PARTY_SIZE_MAX} 人，共用這支手機號碼
+            1 到 {PARTY_SIZE_MAX} 人，共用這個 Email
           </span>
         </label>
         {partySizeError ? (

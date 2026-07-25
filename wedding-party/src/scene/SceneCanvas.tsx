@@ -1,6 +1,6 @@
 import { OrbitControls, useTexture } from '@react-three/drei'
-import { Canvas } from '@react-three/fiber'
-import { useEffect, useLayoutEffect, type ReactNode } from 'react'
+import { Canvas, useFrame } from '@react-three/fiber'
+import { useEffect, useLayoutEffect, useRef, type ReactNode } from 'react'
 import { NearestFilter } from 'three'
 import {
   FLOOR_CANVAS_GRID,
@@ -18,6 +18,19 @@ type SceneCanvasProps = {
   venue?: VenueThemeId
   /** dialog 開啟時凍結畫面（人物移動／姿勢動畫） */
   paused?: boolean
+  /** 首幀渲染完成後呼叫一次 */
+  onReady?: () => void
+}
+
+/** ponytail: 等 useFrame 第一幀＝WebGL 已畫過；比 onCreated 更接近「看得見」 */
+function SceneReady({ onReady }: { onReady: () => void }) {
+  const done = useRef(false)
+  useFrame(() => {
+    if (done.current) return
+    done.current = true
+    queueMicrotask(onReady)
+  })
+  return null
 }
 
 function createFloorCanvas() {
@@ -91,6 +104,7 @@ export function SceneCanvas({
   children,
   venue = DEFAULT_VENUE,
   paused = false,
+  onReady,
 }: SceneCanvasProps) {
   const theme = VENUE_THEMES[venue]
   const wideGrass =
@@ -102,6 +116,7 @@ export function SceneCanvas({
       style={{ background: theme.canvasBackground }}
       frameloop={paused ? 'never' : 'always'}
     >
+      {onReady ? <SceneReady onReady={onReady} /> : null}
       <ambientLight intensity={0.55} />
       <directionalLight position={[6, 12, 4]} intensity={1.1} />
       {theme.starfield.enabled ? <Starfield config={theme.starfield} /> : null}
