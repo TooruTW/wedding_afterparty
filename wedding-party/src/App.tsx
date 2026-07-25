@@ -3,7 +3,12 @@ import { ZoneActor } from './actors/ZoneActor'
 import { GuestDialog } from './components/GuestDialog'
 import type { GuestFormValues } from './components/GuestForm'
 import { SceneCanvas } from './scene/SceneCanvas'
-import { charactersFromAccounts, fetchAccounts } from './data/accounts'
+import {
+  accountsIndexFromAccounts,
+  charactersFromAccounts,
+  fetchAccounts,
+  type AccountIndex,
+} from './data/accounts'
 import type { FakeGuest } from './data/fakeGuests'
 import { WANDER_SPAWN_GRIDS, ZONE_SLOTS } from './scene/zones/zones'
 import type { ZoneBehaviorConfig } from './scene/zones/useZoneBehavior'
@@ -41,6 +46,8 @@ function pickSayIndices(count: number, total: number) {
 function App() {
   // ponytail: 種子改走 fetchAccounts；重整會再打一次模擬 API
   const [guests, setGuests] = useState<FakeGuest[]>([])
+  // ponytail: 帳號索引先寫入；之後登入用 phone 查 characterIds 再打開綁定
+  const [, setAccountIndex] = useState<AccountIndex[]>([])
   const [saying, setSaying] = useState(() => new Set<number>())
   const [dialogOpen, setDialogOpen] = useState(false)
 
@@ -50,6 +57,7 @@ function App() {
       if (cancelled) return
       const next = charactersFromAccounts(accounts)
       setGuests(next)
+      setAccountIndex(accountsIndexFromAccounts(accounts))
       setSaying(pickSayIndices(SAY_VISIBLE, next.length))
     })
     return () => {

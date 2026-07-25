@@ -27,6 +27,17 @@ export async function fetchAccounts(): Promise<Account[]> {
   return (await res.json()) as Account[]
 }
 
+/** 帳號摘要：手機資料 + 擁有的角色 id（不含角色本體） */
+export type AccountIndex = {
+  id: string
+  phone: string
+  realName: string
+  nickname: string
+  drinks: boolean
+  diet: string
+  characterIds: string[]
+}
+
 /** 整組帳號 → 場上要渲染的角色陣列 */
 export function charactersFromAccounts(accounts: Account[]): FakeGuest[] {
   return accounts.flatMap((account) =>
@@ -38,6 +49,19 @@ export function charactersFromAccounts(accounts: Account[]): FakeGuest[] {
       body: { face: c.eyeStyle, headSize: c.headSize },
     })),
   )
+}
+
+/** 整組帳號 → 帳號索引（角色只留 id） */
+export function accountsIndexFromAccounts(accounts: Account[]): AccountIndex[] {
+  return accounts.map((account) => ({
+    id: account.id,
+    phone: account.phone,
+    realName: account.realName,
+    nickname: account.nickname,
+    drinks: account.drinks,
+    diet: account.diet,
+    characterIds: account.characters.map((c) => c.id),
+  }))
 }
 
 {
@@ -61,4 +85,9 @@ export function charactersFromAccounts(accounts: Account[]): FakeGuest[] {
   const guests = charactersFromAccounts([sample])
   console.assert(guests.length === 1 && guests[0]!.face === 'bars', 'flatten keeps eyeStyle as face')
   console.assert(FACE_IDS.includes('bars'), 'eyeStyle must be a FaceId')
+  const index = accountsIndexFromAccounts([sample])
+  console.assert(
+    index.length === 1 && index[0]!.phone === '09' && index[0]!.characterIds[0] === 'c',
+    'account index keeps phone + character ids',
+  )
 }
