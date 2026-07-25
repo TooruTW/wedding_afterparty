@@ -1,11 +1,42 @@
 import type { FormEvent } from 'react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { PARTY_SIZE_MAX, parsePartySize } from '../lib/characterDrafts'
 import { Button } from './ui/button'
 import { DialogFooter } from './ui/dialog'
 
 export const fieldClass =
   'h-9 w-full rounded-lg border border-input bg-transparent px-3 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
+
+/** 註冊表單較長：還沒滑到底時顯示向下箭頭 */
+function ScrollHint() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const box = ref.current?.closest<HTMLElement>('[data-slot="dialog-content"]')
+    if (!box) return
+    const update = () => setVisible(box.scrollHeight - box.scrollTop - box.clientHeight > 8)
+    update()
+    box.addEventListener('scroll', update, { passive: true })
+    const ro = new ResizeObserver(update)
+    ro.observe(box)
+    // ponytail: MutationObserver 補抓內容高度變化；scrollHeight 沒有原生事件可監聽
+    const mo = new MutationObserver(update)
+    mo.observe(box, { childList: true, subtree: true, characterData: true })
+    return () => {
+      box.removeEventListener('scroll', update)
+      ro.disconnect()
+      mo.disconnect()
+    }
+  }, [])
+
+  return (
+    <div ref={ref} aria-hidden className="pointer-events-none sticky bottom-0 mx-auto -mt-4 h-0">
+      {visible ? <ChevronDown className="size-4 -translate-y-5 animate-bounce opacity-50" /> : null}
+    </div>
+  )
+}
 
 export function EventInfoSlot() {
   return (
@@ -31,39 +62,57 @@ export function EventInfoSlot() {
 
 type LoginFormProps = {
   onGoRegister: () => void
-  onSuccess: () => void
+  onSuccess: (email: string) => Promise<void>
 }
 
 export function LoginForm({ onGoRegister, onSuccess }: LoginFormProps) {
-  const [phone, setPhone] = useState('')
+  const [email, setEmail] = useState('')
+  const [error, setError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
-    const trimmed = phone.trim()
-    console.assert(trimmed.length > 0, 'login phone required')
+    const trimmed = email.trim()
+    console.assert(trimmed.length > 0, 'login email required')
     if (!trimmed) return
-    // ponytail: 尚無後端；先通過驗證就進下一頁
-    onSuccess()
+    setError('')
+    setSubmitting(true)
+    try {
+      await onSuccess(trimmed)
+    } catch (cause) {
+      setError(cause instanceof Error ? cause.message : '登入失敗，請稍後再試')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
-    <form className="grid gap-4" onSubmit={handleSubmit}>
+    <form className="flex flex-col justify-between gap-1" onSubmit={handleSubmit}>
       <label className="grid gap-1">
-        <span className="text-muted-foreground">手機號碼</span>
+        <span className="text-muted-foreground">Email</span>
         <input
           required
-          name="phone"
-          type="tel"
-          inputMode="tel"
-          autoComplete="tel"
-          value={phone}
-          onChange={(e) => setPhone(e.target.value)}
+          name="email"
+          type="email"
+          inputMode="email"
+          autoComplete="email"
+          value={email}
+          onChange={(e) => {
+            setError('')
+            setEmail(e.target.value)
+          }}
+          aria-invalid={error ? true : undefined}
           className={fieldClass}
         />
       </label>
+      {error ? (
+        <p className="text-xs text-destructive" role="alert">
+          {error}
+        </p>
+      ) : null}
       <DialogFooter>
-        <Button type="submit" className="w-full sm:w-auto">
-          登入
+        <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
+          {submitting ? '登入中…' : '登入'}
         </Button>
       </DialogFooter>
       <p className="text-center text-sm text-muted-foreground">
@@ -83,17 +132,17 @@ export function LoginForm({ onGoRegister, onSuccess }: LoginFormProps) {
 export type RegisterFormValues = {
   realName: string
   nickname: string
-  phone: string
+  email: string
   drinks: boolean
   diet: string
-  /** 同一手機帳號下的出席人數（含本人），正整數 */
+  /** 同一 email 帳號下的出席人數（含本人），正整數 */
   partySize: number
 }
 
 const EMPTY_REGISTER: RegisterFormValues = {
   realName: '',
   nickname: '',
-  phone: '',
+  email: '',
   drinks: false,
   diet: '',
   partySize: 1,
@@ -115,7 +164,7 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
     e.preventDefault()
     const realName = form.realName.trim()
     const nickname = form.nickname.trim()
-    const phone = form.phone.trim()
+    const email = form.email.trim()
     if (!realName && !nickname) {
       setNameError('真實姓名與綽號請擇一填寫')
       return
@@ -127,11 +176,11 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
       return
     }
     setPartySizeError('')
-    console.assert(phone.length > 0, 'register phone required')
+    console.assert(email.length > 0, 'register email required')
     onSuccess({
       realName,
       nickname,
-      phone,
+      email,
       drinks: form.drinks,
       diet: form.diet.trim(),
       partySize,
@@ -139,7 +188,7 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
   }
 
   return (
-    <form className="grid gap-4" onSubmit={handleSubmit}>
+    <form className="flex flex-col justify-between gap-1 pb-4" onSubmit={handleSubmit}>
       <div className="grid gap-3">
         <div className="grid gap-1">
           <span className="text-muted-foreground">真實姓名</span>
@@ -177,15 +226,17 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
         ) : null}
 
         <label className="grid gap-1">
-          <span className="text-muted-foreground">手機號碼</span>
+          <span className="text-muted-foreground">
+            Email <span className="text-xs">（僅用於登入）</span>
+          </span>
           <input
             required
-            name="phone"
-            type="tel"
-            inputMode="tel"
-            autoComplete="tel"
-            value={form.phone}
-            onChange={(e) => setForm((prev) => ({ ...prev, phone: e.target.value }))}
+            name="email"
+            type="email"
+            inputMode="email"
+            autoComplete="email"
+            value={form.email}
+            onChange={(e) => setForm((prev) => ({ ...prev, email: e.target.value }))}
             className={fieldClass}
           />
         </label>
@@ -210,7 +261,7 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
             className={fieldClass}
           />
           <span id="party-size-hint" className="text-xs text-muted-foreground">
-            1 到 {PARTY_SIZE_MAX} 人，共用這支手機號碼
+            1 到 {PARTY_SIZE_MAX} 人，共用這個 Email
           </span>
         </label>
         {partySizeError ? (
@@ -270,6 +321,7 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
           立即登入
         </button>
       </p>
+      <ScrollHint />
     </form>
   )
 }

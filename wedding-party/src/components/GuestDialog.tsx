@@ -4,28 +4,41 @@ import { Tabs } from 'radix-ui'
 import {
   draftLabel,
   makeDrafts,
-  removeDraft,
   updateDraft,
   type Draft,
 } from '../lib/characterDrafts'
 import { EventInfoSlot, LoginForm, RegisterForm } from './AuthForms'
 import { EMPTY_GUEST_FORM, GuestForm, type GuestFormValues } from './GuestForm'
+import { cn } from '@/lib/utils'
 import { Button } from './ui/button'
 import {
   Dialog,
   DialogContent,
-  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
 } from './ui/dialog'
 
+/** ponytail: CSS bottom-sheet instead of vaul; upgrade if drag-to-dismiss is needed */
+const PANEL_BASE =
+  'h-full overflow-y-auto [transition-property:max-height,max-width] duration-300 ease-in-out [scrollbar-width:none] [&::-webkit-scrollbar]:hidden max-sm:top-auto max-sm:right-0 max-sm:bottom-0 max-sm:left-0 max-sm:max-w-none max-sm:translate-x-0 max-sm:translate-y-0 max-sm:rounded-b-none max-sm:data-open:slide-in-from-bottom-4 max-sm:data-open:zoom-in-100 max-sm:data-closed:slide-out-to-bottom-4 max-sm:data-closed:zoom-out-100'
+
 type DialogPage = 'login' | 'register' | 'guest'
+
+const PAGE_MAX_H: Record<DialogPage, string> = {
+  login: 'max-h-140',
+  register: 'max-h-180',
+  guest: 'max-h-120',
+}
 
 type GuestDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (guests: GuestFormValues[]) => void
+  onLogin: (email: string) => Promise<GuestFormValues[]>
+  onLogout: () => void
+  /** 登入後帶入自己的角色；未登入時為空 */
+  seedGuests?: GuestFormValues[]
 }
 
 const PAGE_TITLE: Record<DialogPage, string> = {
@@ -38,11 +51,22 @@ function isDraftComplete(values: GuestFormValues) {
   return values.name.trim().length > 0 && values.say.trim().length > 0
 }
 
-export function GuestDialog({ open, onOpenChange, onSubmit }: GuestDialogProps) {
-  const [page, setPage] = useState<DialogPage>('login')
-  const [drafts, setDrafts] = useState<Draft<GuestFormValues>[]>([])
-  const [selectedId, setSelectedId] = useState('')
-  const [confirmOpen, setConfirmOpen] = useState(false)
+export function GuestDialog({
+  open,
+  onOpenChange,
+  onSubmit,
+  onLogin,
+  onLogout,
+  seedGuests,
+}: GuestDialogProps) {
+  function seededDrafts(): Draft<GuestFormValues>[] {
+    return (seedGuests ?? []).map((values) => ({ id: crypto.randomUUID(), values }))
+  }
+
+  const initialDrafts = seededDrafts()
+  const [page, setPage] = useState<DialogPage>(initialDrafts.length ? 'guest' : 'login')
+  const [drafts, setDrafts] = useState<Draft<GuestFormValues>[]>(initialDrafts)
+  const [selectedId, setSelectedId] = useState(initialDrafts[0]?.id ?? '')
   const [submitError, setSubmitError] = useState('')
 
   const selected = drafts.find((d) => d.id === selectedId)
@@ -55,13 +79,30 @@ export function GuestDialog({ open, onOpenChange, onSubmit }: GuestDialogProps) 
     setPage('guest')
   }
 
+  async function handleLogin(email: string) {
+    const values = await onLogin(email)
+    const next = values.map((value) => ({ id: crypto.randomUUID(), values: value }))
+    setDrafts(next)
+    setSelectedId(next[0]?.id ?? '')
+    setSubmitError('')
+    setPage('guest')
+  }
+
+  function handleLogout() {
+    onLogout()
+    setDrafts([])
+    setSelectedId('')
+    setSubmitError('')
+    setPage('login')
+  }
+
   function resetAndClose(nextOpen: boolean) {
     onOpenChange(nextOpen)
     if (nextOpen) {
-      setPage('login')
-      setDrafts([])
-      setSelectedId('')
-      setConfirmOpen(false)
+      const seeded = seededDrafts()
+      setPage(seeded.length ? 'guest' : 'login')
+      setDrafts(seeded)
+      setSelectedId(seeded[0]?.id ?? '')
       setSubmitError('')
     }
   }
@@ -84,13 +125,6 @@ export function GuestDialog({ open, onOpenChange, onSubmit }: GuestDialogProps) 
     onSubmit(all.map((d) => d.values))
   }
 
-  function handleDeleteConfirmed() {
-    const result = removeDraft(drafts, selectedId)
-    setDrafts(result.drafts)
-    setSelectedId(result.selectedId)
-    setConfirmOpen(false)
-  }
-
   return (
     <Dialog open={open} onOpenChange={resetAndClose}>
       <DialogTrigger asChild>
@@ -102,7 +136,13 @@ export function GuestDialog({ open, onOpenChange, onSubmit }: GuestDialogProps) 
           <User className="size-6" />
         </Button>
       </DialogTrigger>
-      <DialogContent className={page === 'guest' ? 'sm:max-w-2xl' : 'sm:max-w-md'}>
+      <DialogContent
+        className={cn(
+          PANEL_BASE,
+          PAGE_MAX_H[page],
+          page === 'guest' ? 'sm:max-w-2xl' : 'sm:max-w-md',
+        )}
+      >
         <DialogHeader>
           <DialogTitle>{PAGE_TITLE[page]}</DialogTitle>
         </DialogHeader>
@@ -110,7 +150,7 @@ export function GuestDialog({ open, onOpenChange, onSubmit }: GuestDialogProps) 
         {page === 'login' || page === 'register' ? <EventInfoSlot /> : null}
 
         {page === 'login' ? (
-          <LoginForm onGoRegister={() => setPage('register')} onSuccess={() => startGuestPage(1)} />
+          <LoginForm onGoRegister={() => setPage('register')} onSuccess={handleLogin} />
         ) : null}
 
         {page === 'register' ? (
@@ -148,39 +188,15 @@ export function GuestDialog({ open, onOpenChange, onSubmit }: GuestDialogProps) 
                   {submitError}
                 </p>
               ) : null}
-
-              {drafts.length > 1 ? (
-                <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
-                  <DialogTrigger asChild>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="sm"
-                      className="justify-self-center text-muted-foreground"
-                    >
-                      刪除這位角色
-                    </Button>
-                  </DialogTrigger>
-                  <DialogContent className="sm:max-w-sm">
-                    <DialogHeader>
-                      <DialogTitle>
-                        刪除「{draftLabel(selected.values.name, drafts.indexOf(selected))}」？
-                      </DialogTitle>
-                    </DialogHeader>
-                    <p className="text-sm text-muted-foreground">
-                      這位角色的設定會被移除，無法復原。
-                    </p>
-                    <DialogFooter>
-                      <Button type="button" variant="outline" onClick={() => setConfirmOpen(false)}>
-                        取消
-                      </Button>
-                      <Button type="button" variant="destructive" onClick={handleDeleteConfirmed}>
-                        確認刪除
-                      </Button>
-                    </DialogFooter>
-                  </DialogContent>
-                </Dialog>
-              ) : null}
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                className="mx-auto text-muted-foreground"
+                onClick={handleLogout}
+              >
+                登出
+              </Button>
             </Tabs.Content>
           </Tabs.Root>
         ) : null}
