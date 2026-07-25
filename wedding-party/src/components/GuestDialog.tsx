@@ -37,6 +37,8 @@ type GuestDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
   onSubmit: (guests: GuestFormValues[]) => void
+  /** 給定時跳過登入，直接以這些角色開在「角色設定」頁（假資料預覽多人狀態用） */
+  seedGuests?: GuestFormValues[]
 }
 
 const PAGE_TITLE: Record<DialogPage, string> = {
@@ -49,10 +51,15 @@ function isDraftComplete(values: GuestFormValues) {
   return values.name.trim().length > 0 && values.say.trim().length > 0
 }
 
-export function GuestDialog({ open, onOpenChange, onSubmit }: GuestDialogProps) {
-  const [page, setPage] = useState<DialogPage>('login')
-  const [drafts, setDrafts] = useState<Draft<GuestFormValues>[]>([])
-  const [selectedId, setSelectedId] = useState('')
+export function GuestDialog({ open, onOpenChange, onSubmit, seedGuests }: GuestDialogProps) {
+  function seededDrafts(): Draft<GuestFormValues>[] {
+    return (seedGuests ?? []).map((values) => ({ id: crypto.randomUUID(), values }))
+  }
+
+  const initialDrafts = seededDrafts()
+  const [page, setPage] = useState<DialogPage>(initialDrafts.length ? 'guest' : 'login')
+  const [drafts, setDrafts] = useState<Draft<GuestFormValues>[]>(initialDrafts)
+  const [selectedId, setSelectedId] = useState(initialDrafts[0]?.id ?? '')
   const [confirmOpen, setConfirmOpen] = useState(false)
   const [submitError, setSubmitError] = useState('')
 
@@ -69,9 +76,10 @@ export function GuestDialog({ open, onOpenChange, onSubmit }: GuestDialogProps) 
   function resetAndClose(nextOpen: boolean) {
     onOpenChange(nextOpen)
     if (nextOpen) {
-      setPage('login')
-      setDrafts([])
-      setSelectedId('')
+      const seeded = seededDrafts()
+      setPage(seeded.length ? 'guest' : 'login')
+      setDrafts(seeded)
+      setSelectedId(seeded[0]?.id ?? '')
       setConfirmOpen(false)
       setSubmitError('')
     }

@@ -3,12 +3,20 @@ import { ZoneActor } from './actors/ZoneActor'
 import { GuestDialog } from './components/GuestDialog'
 import type { GuestFormValues } from './components/GuestForm'
 import { SceneCanvas } from './scene/SceneCanvas'
-import { FAKE_GUESTS, type FakeGuest } from './data/fakeGuests'
+import { charactersFromAccounts, fetchAccounts } from './data/accounts'
+import type { FakeGuest } from './data/fakeGuests'
 import { WANDER_SPAWN_GRIDS, ZONE_SLOTS } from './scene/zones/zones'
 import type { ZoneBehaviorConfig } from './scene/zones/useZoneBehavior'
 
 const SAY_VISIBLE = 10
 const SAY_ROTATE_MS = 5000
+
+/** ponytail: 假資料預覽多人角色編輯狀態；正式上線移除此常數與 seedGuests prop */
+const FAKE_PARTY: GuestFormValues[] = [
+  { name: '阿明', face: 'bars', say: '新婚快樂！', body: { face: 'bars', headSize: 0.85 } },
+  { name: '小美', face: 'dots', say: '甜甜蜜蜜', body: { face: 'dots', headSize: 1.2 } },
+  { name: '大偉', face: 'ovals', say: '舞池是我的', body: { face: 'ovals', headSize: 1.15 } },
+]
 
 /** 先填 slot，多出來的進 wander（spawn 循環用） */
 function configForIndex(index: number): ZoneBehaviorConfig {
@@ -31,10 +39,23 @@ function pickSayIndices(count: number, total: number) {
 }
 
 function App() {
-  // ponytail: 暫存於記憶體；重整即回 FAKE_GUESTS 種子
-  const [guests, setGuests] = useState<FakeGuest[]>(() => [...FAKE_GUESTS])
-  const [saying, setSaying] = useState(() => pickSayIndices(SAY_VISIBLE, FAKE_GUESTS.length))
+  // ponytail: 種子改走 fetchAccounts；重整會再打一次模擬 API
+  const [guests, setGuests] = useState<FakeGuest[]>([])
+  const [saying, setSaying] = useState(() => new Set<number>())
   const [dialogOpen, setDialogOpen] = useState(false)
+
+  useEffect(() => {
+    let cancelled = false
+    fetchAccounts().then((accounts) => {
+      if (cancelled) return
+      const next = charactersFromAccounts(accounts)
+      setGuests(next)
+      setSaying(pickSayIndices(SAY_VISIBLE, next.length))
+    })
+    return () => {
+      cancelled = true
+    }
+  }, [])
 
   useEffect(() => {
     const id = setInterval(() => {
@@ -46,7 +67,7 @@ function App() {
   function addGuests(values: GuestFormValues[]) {
     setGuests((prev) => [
       ...prev,
-      ...values.map((v) => ({ id: `guest-${crypto.randomUUID()}`, ...v })),
+      ...values.map((v) => ({ id: crypto.randomUUID(), ...v })),
     ])
     setDialogOpen(false)
   }
@@ -65,7 +86,12 @@ function App() {
         ))}
       </SceneCanvas>
 
-      <GuestDialog open={dialogOpen} onOpenChange={setDialogOpen} onSubmit={addGuests} />
+      <GuestDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        onSubmit={addGuests}
+        seedGuests={FAKE_PARTY}
+      />
     </div>
   )
 }
