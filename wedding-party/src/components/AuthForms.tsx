@@ -1,11 +1,42 @@
 import type { FormEvent } from 'react'
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { PARTY_SIZE_MAX, parsePartySize } from '../lib/characterDrafts'
 import { Button } from './ui/button'
 import { DialogFooter } from './ui/dialog'
 
 export const fieldClass =
   'h-9 w-full rounded-lg border border-input bg-transparent px-3 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
+
+/** 註冊表單較長：還沒滑到底時顯示向下箭頭 */
+function ScrollHint() {
+  const ref = useRef<HTMLDivElement>(null)
+  const [visible, setVisible] = useState(false)
+
+  useEffect(() => {
+    const box = ref.current?.closest<HTMLElement>('[data-slot="dialog-content"]')
+    if (!box) return
+    const update = () => setVisible(box.scrollHeight - box.scrollTop - box.clientHeight > 8)
+    update()
+    box.addEventListener('scroll', update, { passive: true })
+    const ro = new ResizeObserver(update)
+    ro.observe(box)
+    // ponytail: MutationObserver 補抓內容高度變化；scrollHeight 沒有原生事件可監聽
+    const mo = new MutationObserver(update)
+    mo.observe(box, { childList: true, subtree: true, characterData: true })
+    return () => {
+      box.removeEventListener('scroll', update)
+      ro.disconnect()
+      mo.disconnect()
+    }
+  }, [])
+
+  return (
+    <div ref={ref} aria-hidden className="pointer-events-none sticky bottom-0 mx-auto -mt-4 h-0">
+      {visible ? <ChevronDown className="size-4 -translate-y-5 animate-bounce opacity-50" /> : null}
+    </div>
+  )
+}
 
 export function EventInfoSlot() {
   return (
@@ -47,7 +78,7 @@ export function LoginForm({ onGoRegister, onSuccess }: LoginFormProps) {
   }
 
   return (
-    <form className="grid gap-4" onSubmit={handleSubmit}>
+    <form className="flex flex-col justify-between gap-1" onSubmit={handleSubmit}>
       <label className="grid gap-1">
         <span className="text-muted-foreground">手機號碼</span>
         <input
@@ -139,7 +170,7 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
   }
 
   return (
-    <form className="grid gap-4" onSubmit={handleSubmit}>
+    <form className="flex flex-col justify-between gap-1 pb-4" onSubmit={handleSubmit}>
       <div className="grid gap-3">
         <div className="grid gap-1">
           <span className="text-muted-foreground">真實姓名</span>
@@ -270,6 +301,7 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
           立即登入
         </button>
       </p>
+      <ScrollHint />
     </form>
   )
 }
