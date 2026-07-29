@@ -21,6 +21,8 @@ import type { ZoneBehaviorConfig } from './scene/zones/useZoneBehavior'
 const SAY_VISIBLE = 10
 const SAY_ROTATE_MS = 5000
 const SPLASH_MIN_MS = 1000
+/** 遮罩起算點 = App 載入的時間；整支程式只有一個 App，不需要 per-instance */
+const SPLASH_STARTED_AT = Date.now()
 
 /** 先填 slot，多出來的進 wander（spawn 循環用） */
 function configForIndex(index: number): ZoneBehaviorConfig {
@@ -50,7 +52,6 @@ function App() {
   const [saying, setSaying] = useState(() => new Set<number>())
   const [sceneReady, setSceneReady] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const splashStartedAt = useRef(Date.now())
   const splashTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
 
   async function reloadFloor() {
@@ -116,7 +117,7 @@ function App() {
 
   function handleSceneReady() {
     // ponytail: 遮罩至少 SPLASH_MIN_MS；場景更晚就緒就等到就緒再關
-    const remain = Math.max(0, SPLASH_MIN_MS - (Date.now() - splashStartedAt.current))
+    const remain = Math.max(0, SPLASH_MIN_MS - (Date.now() - SPLASH_STARTED_AT))
     clearTimeout(splashTimer.current)
     splashTimer.current = setTimeout(() => {
       setSceneReady(true)
@@ -128,6 +129,8 @@ function App() {
 
   useEffect(() => {
     let cancelled = false
+    // setState 發生在 await 之後的非同步回呼，不是同步 effect body；規則看不穿 async
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     reloadFloor().catch((cause) => {
       if (!cancelled) console.error(cause)
     })

@@ -1,7 +1,7 @@
 import { useMemo } from 'react'
 import { CanvasTexture, LinearFilter, SRGBColorSpace } from 'three'
 
-const cache = new Map<string, { map: CanvasTexture; aspect: number }>()
+const cache = new Map<string, ReturnType<typeof makeSayTexture>>()
 
 function roundRect(
   ctx: CanvasRenderingContext2D,
