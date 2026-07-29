@@ -31,15 +31,16 @@ const fieldClass =
 type GuestFormProps = {
   value: GuestFormValues
   onChange: (next: GuestFormValues) => void
-  onSubmit: (guest: GuestFormValues) => void
+  onSubmit: (guest: GuestFormValues) => void | Promise<void>
+  submitting?: boolean
 }
 
-export function GuestForm({ value, onChange, onSubmit }: GuestFormProps) {
+export function GuestForm({ value, onChange, onSubmit, submitting = false }: GuestFormProps) {
   function setFace(face: FaceId) {
     onChange({ ...value, face, body: { ...value.body, face } })
   }
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     const guest: GuestFormValues = {
       name: value.name.trim().slice(0, NAME_MAX),
@@ -51,7 +52,7 @@ export function GuestForm({ value, onChange, onSubmit }: GuestFormProps) {
       guest.face === guest.body.face && guest.name.length > 0 && guest.say.length > 0,
       'guest form incomplete',
     )
-    onSubmit(guest)
+    await onSubmit(guest)
   }
 
   return (
@@ -113,7 +114,7 @@ export function GuestForm({ value, onChange, onSubmit }: GuestFormProps) {
             type="range"
             name="headSize"
             min={0.5}
-            max={2}
+            max={1.5}
             step={0.05}
             value={value.body.headSize}
             onChange={(e) =>
@@ -147,7 +148,9 @@ export function GuestForm({ value, onChange, onSubmit }: GuestFormProps) {
       </div>
 
       <DialogFooter className="sm:col-span-2">
-        <Button type="submit">送出</Button>
+        <Button type="submit" disabled={submitting}>
+          {submitting ? '儲存中…' : '送出'}
+        </Button>
       </DialogFooter>
     </form>
   )

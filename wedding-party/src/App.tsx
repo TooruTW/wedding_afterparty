@@ -2,12 +2,15 @@ import { useEffect, useRef, useState } from 'react'
 import { ZoneActor } from './actors/ZoneActor'
 import { GuestDialog } from './components/GuestDialog'
 import type { GuestFormValues } from './components/GuestForm'
+import type { RegisterFormValues } from './components/AuthForms'
 import { SceneCanvas } from './scene/SceneCanvas'
 import {
   accountToFormValues,
   charactersToGuests,
   fetchCharacters,
   postLogin,
+  postRegisterWithCharacters,
+  saveCharacters,
   type Account,
 } from './data/accounts'
 import type { FakeGuest } from './data/fakeGuests'
@@ -18,6 +21,8 @@ import type { ZoneBehaviorConfig } from './scene/zones/useZoneBehavior'
 const SAY_VISIBLE = 10
 const SAY_ROTATE_MS = 5000
 const SPLASH_MIN_MS = 1000
+/** 遮罩起算點 = App 載入的時間；整支程式只有一個 App，不需要 per-instance */
+const SPLASH_STARTED_AT = Date.now()
 
 /** 先填 slot，多出來的進 wander（spawn 循環用） */
 function configForIndex(index: number): ZoneBehaviorConfig {
@@ -42,13 +47,19 @@ function pickSayIndices(count: number, total: number) {
 function App() {
   const [guests, setGuests] = useState<FakeGuest[]>([])
   // ponytail: 只存「自己」；別人的帳號不該進前端
-  const [, setMe] = useState<Account | null>(null)
+  const [me, setMe] = useState<Account | null>(null)
   const [seedGuests, setSeedGuests] = useState<GuestFormValues[]>()
   const [saying, setSaying] = useState(() => new Set<number>())
   const [sceneReady, setSceneReady] = useState(false)
   const [dialogOpen, setDialogOpen] = useState(false)
-  const splashStartedAt = useRef(Date.now())
   const splashTimer = useRef<ReturnType<typeof setTimeout>>(undefined)
+
+  async function reloadFloor() {
+    const characters = await fetchCharacters()
+    const next = charactersToGuests(characters)
+    setGuests(next)
+    setSaying(pickSayIndices(SAY_VISIBLE, next.length))
+  }
 
   function applyOwnAccount(account: Account) {
     const ownCharacters = accountToFormValues(account)
@@ -64,15 +75,49 @@ function App() {
     return ownCharacters
   }
 
+  async function handleRegister(values: RegisterFormValues) {
+    const account = await postRegisterWithCharacters(values)
+    const ownCharacters = applyOwnAccount(account)
+    saveAuthSession(account.email)
+    await reloadFloor()
+    return ownCharacters
+  }
+
   function handleLogout() {
     clearAuthSession()
     setMe(null)
     setSeedGuests(undefined)
   }
 
+  /** 開啟前先抓完最新資料再翻開，dialog 才不會先閃一下舊角色 */
+  async function handleDialogOpenChange(next: boolean) {
+    if (!next) {
+      setDialogOpen(false)
+      return
+    }
+    const session = getAuthSession()
+    try {
+      await reloadFloor()
+      if (session) applyOwnAccount(await postLogin({ email: session.email }))
+    } catch (cause) {
+      console.error(cause)
+      if (session) handleLogout()
+    }
+    setDialogOpen(true)
+  }
+
+  async function handleSubmitGuests(values: GuestFormValues[]) {
+    if (!me) throw new Error('請先登入或報名')
+    await saveCharacters(me.id, values)
+    await reloadFloor()
+    const refreshed = await postLogin({ email: me.email })
+    applyOwnAccount(refreshed)
+    setDialogOpen(false)
+  }
+
   function handleSceneReady() {
     // ponytail: 遮罩至少 SPLASH_MIN_MS；場景更晚就緒就等到就緒再關
-    const remain = Math.max(0, SPLASH_MIN_MS - (Date.now() - splashStartedAt.current))
+    const remain = Math.max(0, SPLASH_MIN_MS - (Date.now() - SPLASH_STARTED_AT))
     clearTimeout(splashTimer.current)
     splashTimer.current = setTimeout(() => {
       setSceneReady(true)
@@ -84,11 +129,10 @@ function App() {
 
   useEffect(() => {
     let cancelled = false
-    fetchCharacters().then((characters) => {
-      if (cancelled) return
-      const next = charactersToGuests(characters)
-      setGuests(next)
-      setSaying(pickSayIndices(SAY_VISIBLE, next.length))
+    // setState 發生在 await 之後的非同步回呼，不是同步 effect body；規則看不穿 async
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    reloadFloor().catch((cause) => {
+      if (!cancelled) console.error(cause)
     })
     return () => {
       cancelled = true
@@ -118,14 +162,6 @@ function App() {
     return () => clearInterval(id)
   }, [guests.length])
 
-  function addGuests(values: GuestFormValues[]) {
-    setGuests((prev) => [
-      ...prev,
-      ...values.map((v) => ({ id: crypto.randomUUID(), ...v })),
-    ])
-    setDialogOpen(false)
-  }
-
   return (
     <div className="app">
       <SceneCanvas venue="grassDay" paused={dialogOpen} onReady={handleSceneReady}>
@@ -142,9 +178,10 @@ function App() {
 
       <GuestDialog
         open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        onSubmit={addGuests}
+        onOpenChange={handleDialogOpenChange}
+        onSubmit={handleSubmitGuests}
         onLogin={handleLogin}
+        onRegister={handleRegister}
         onLogout={handleLogout}
         seedGuests={seedGuests}
       />
