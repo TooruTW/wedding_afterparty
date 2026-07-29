@@ -150,7 +150,7 @@ const EMPTY_REGISTER: RegisterFormValues = {
 
 type RegisterFormProps = {
   onGoLogin: () => void
-  onSuccess: (values: RegisterFormValues) => void
+  onSuccess: (values: RegisterFormValues) => Promise<void>
 }
 
 export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
@@ -159,8 +159,10 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
   const [partySizeText, setPartySizeText] = useState('1')
   const [nameError, setNameError] = useState('')
   const [partySizeError, setPartySizeError] = useState('')
+  const [submitError, setSubmitError] = useState('')
+  const [submitting, setSubmitting] = useState(false)
 
-  function handleSubmit(e: FormEvent) {
+  async function handleSubmit(e: FormEvent) {
     e.preventDefault()
     const realName = form.realName.trim()
     const nickname = form.nickname.trim()
@@ -177,14 +179,22 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
     }
     setPartySizeError('')
     console.assert(email.length > 0, 'register email required')
-    onSuccess({
-      realName,
-      nickname,
-      email,
-      drinks: form.drinks,
-      diet: form.diet.trim(),
-      partySize,
-    })
+    setSubmitError('')
+    setSubmitting(true)
+    try {
+      await onSuccess({
+        realName,
+        nickname,
+        email,
+        drinks: form.drinks,
+        diet: form.diet.trim(),
+        partySize,
+      })
+    } catch (cause) {
+      setSubmitError(cause instanceof Error ? cause.message : '報名失敗，請稍後再試')
+    } finally {
+      setSubmitting(false)
+    }
   }
 
   return (
@@ -306,9 +316,14 @@ export function RegisterForm({ onGoLogin, onSuccess }: RegisterFormProps) {
         </label>
       </div>
 
+      {submitError ? (
+        <p className="text-xs text-destructive" role="alert">
+          {submitError}
+        </p>
+      ) : null}
       <DialogFooter>
-        <Button type="submit" className="w-full sm:w-auto">
-          報名
+        <Button type="submit" disabled={submitting} className="w-full sm:w-auto">
+          {submitting ? '報名中…' : '報名'}
         </Button>
       </DialogFooter>
       <p className="text-center text-sm text-muted-foreground">

@@ -7,7 +7,12 @@ import {
   updateDraft,
   type Draft,
 } from '../lib/characterDrafts'
-import { EventInfoSlot, LoginForm, RegisterForm } from './AuthForms'
+import {
+  EventInfoSlot,
+  LoginForm,
+  RegisterForm,
+  type RegisterFormValues,
+} from './AuthForms'
 import { EMPTY_GUEST_FORM, GuestForm, type GuestFormValues } from './GuestForm'
 import { cn } from '@/lib/utils'
 import { Button } from './ui/button'
@@ -34,8 +39,9 @@ const PAGE_MAX_H: Record<DialogPage, string> = {
 type GuestDialogProps = {
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSubmit: (guests: GuestFormValues[]) => void
+  onSubmit: (guests: GuestFormValues[]) => Promise<void>
   onLogin: (email: string) => Promise<GuestFormValues[]>
+  onRegister: (values: RegisterFormValues) => Promise<GuestFormValues[]>
   onLogout: () => void
   /** 登入後帶入自己的角色；未登入時為空 */
   seedGuests?: GuestFormValues[]
@@ -56,6 +62,7 @@ export function GuestDialog({
   onOpenChange,
   onSubmit,
   onLogin,
+  onRegister,
   onLogout,
   seedGuests,
 }: GuestDialogProps) {
@@ -68,22 +75,40 @@ export function GuestDialog({
   const [drafts, setDrafts] = useState<Draft<GuestFormValues>[]>(initialDrafts)
   const [selectedId, setSelectedId] = useState(initialDrafts[0]?.id ?? '')
   const [submitError, setSubmitError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  // 開啟的瞬間才用當下的 seedGuests 重建草稿；App 會在翻開前先重抓後端
+  const [wasOpen, setWasOpen] = useState(open)
+  if (open !== wasOpen) {
+    setWasOpen(open)
+    if (open) {
+      const seeded = seededDrafts()
+      setPage(seeded.length ? 'guest' : 'login')
+      setDrafts(seeded)
+      setSelectedId(seeded[0]?.id ?? '')
+      setSubmitError('')
+    }
+  }
 
   const selected = drafts.find((d) => d.id === selectedId)
 
-  function startGuestPage(partySize: number) {
-    const next = makeDrafts(partySize, () => ({ ...EMPTY_GUEST_FORM }))
+  async function handleLogin(email: string) {
+    const values = await onLogin(email)
+    const next =
+      values.length > 0
+        ? values.map((value) => ({ id: crypto.randomUUID(), values: value }))
+        : makeDrafts(1, () => ({ ...EMPTY_GUEST_FORM }))
     setDrafts(next)
     setSelectedId(next[0]!.id)
     setSubmitError('')
     setPage('guest')
   }
 
-  async function handleLogin(email: string) {
-    const values = await onLogin(email)
-    const next = values.map((value) => ({ id: crypto.randomUUID(), values: value }))
+  async function handleRegister(values: RegisterFormValues) {
+    const seeded = await onRegister(values)
+    const next = seeded.map((value) => ({ id: crypto.randomUUID(), values: value }))
     setDrafts(next)
-    setSelectedId(next[0]?.id ?? '')
+    setSelectedId(next[0]!.id)
     setSubmitError('')
     setPage('guest')
   }
@@ -96,24 +121,13 @@ export function GuestDialog({
     setPage('login')
   }
 
-  function resetAndClose(nextOpen: boolean) {
-    onOpenChange(nextOpen)
-    if (nextOpen) {
-      const seeded = seededDrafts()
-      setPage(seeded.length ? 'guest' : 'login')
-      setDrafts(seeded)
-      setSelectedId(seeded[0]?.id ?? '')
-      setSubmitError('')
-    }
-  }
-
   function handleFormChange(values: GuestFormValues) {
     setSubmitError('')
     setDrafts((prev) => updateDraft(prev, selectedId, values))
   }
 
   /** GuestForm 只驗證目前分頁；這裡先存回目前值，再驗證所有草稿後一次送出 */
-  function handleFormSubmit(current: GuestFormValues) {
+  async function handleFormSubmit(current: GuestFormValues) {
     const all = updateDraft(drafts, selectedId, current)
     setDrafts(all)
     const incomplete = all.find((d) => !isDraftComplete(d.values))
@@ -122,11 +136,19 @@ export function GuestDialog({
       setSubmitError('還有角色未完成，請補齊名字與想說的話')
       return
     }
-    onSubmit(all.map((d) => d.values))
+    setSaving(true)
+    setSubmitError('')
+    try {
+      await onSubmit(all.map((d) => d.values))
+    } catch (cause) {
+      setSubmitError(cause instanceof Error ? cause.message : '儲存失敗，請稍後再試')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
-    <Dialog open={open} onOpenChange={resetAndClose}>
+    <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
         <Button
           size="icon-lg"
@@ -154,10 +176,7 @@ export function GuestDialog({
         ) : null}
 
         {page === 'register' ? (
-          <RegisterForm
-            onGoLogin={() => setPage('login')}
-            onSuccess={(values) => startGuestPage(values.partySize)}
-          />
+          <RegisterForm onGoLogin={() => setPage('login')} onSuccess={handleRegister} />
         ) : null}
 
         {page === 'guest' && selected ? (
@@ -182,6 +201,7 @@ export function GuestDialog({
                 value={selected.values}
                 onChange={handleFormChange}
                 onSubmit={handleFormSubmit}
+                submitting={saving}
               />
               {submitError ? (
                 <p className="text-xs text-destructive" role="alert">
