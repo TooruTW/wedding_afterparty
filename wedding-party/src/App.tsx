@@ -21,8 +21,18 @@ import type { ZoneBehaviorConfig } from './scene/zones/useZoneBehavior'
 const SAY_VISIBLE = 10
 const SAY_ROTATE_MS = 5000
 const SPLASH_MIN_MS = 1000
+/** 場上固定格子數；角色隨機塞進格子，人少才不會全擠在前面的聊天／坐下區 */
+const FLOOR_CAPACITY = 30
 /** 遮罩起算點 = App 載入的時間；整支程式只有一個 App，不需要 per-instance */
 const SPLASH_STARTED_AT = Date.now()
+
+function shuffleInPlace<T>(arr: T[]): T[] {
+  for (let i = arr.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1))
+    ;[arr[i], arr[j]] = [arr[j]!, arr[i]!]
+  }
+  return arr
+}
 
 /** 先填 slot，多出來的進 wander（spawn 循環用） */
 function configForIndex(index: number): ZoneBehaviorConfig {
@@ -35,17 +45,40 @@ function configForIndex(index: number): ZoneBehaviorConfig {
   return { kind: 'wander', walkStyle: 'frenzy', spawnGrid: spawn }
 }
 
-function pickSayIndices(count: number, total: number) {
-  const all = Array.from({ length: total }, (_, i) => i)
-  for (let i = all.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1))
-    ;[all[i], all[j]] = [all[j]!, all[i]!]
-  }
-  return new Set(all.slice(0, Math.min(count, total)))
+/** 把角色隨機撒進固定長度場地；超過容量就隨機捨棄多餘的 */
+function scatterOntoFloor(guests: FakeGuest[], capacity = FLOOR_CAPACITY): (FakeGuest | null)[] {
+  const floor: (FakeGuest | null)[] = Array.from({ length: capacity }, () => null)
+  const indices = shuffleInPlace(Array.from({ length: capacity }, (_, i) => i))
+  const placed = shuffleInPlace([...guests]).slice(0, capacity)
+  for (let i = 0; i < placed.length; i++) floor[indices[i]!] = placed[i]!
+  return floor
+}
+
+function pickSayIndices(count: number, floor: (FakeGuest | null)[]) {
+  const occupied = floor.flatMap((g, i) => (g ? [i] : []))
+  shuffleInPlace(occupied)
+  return new Set(occupied.slice(0, Math.min(count, occupied.length)))
+}
+
+{
+  const demo = scatterOntoFloor(
+    Array.from({ length: 3 }, (_, i) => ({
+      id: `t${i}`,
+      name: `t${i}`,
+      face: 'bars' as const,
+      say: '',
+      body: { face: 'bars' as const, headSize: 1 as const },
+    })),
+    30,
+  )
+  console.assert(demo.length === 30, 'floor is always capacity-long')
+  console.assert(demo.filter(Boolean).length === 3, 'only real guests occupy cells')
 }
 
 function App() {
-  const [guests, setGuests] = useState<FakeGuest[]>([])
+  const [guests, setGuests] = useState<(FakeGuest | null)[]>(() =>
+    Array.from({ length: FLOOR_CAPACITY }, () => null),
+  )
   // ponytail: 只存「自己」；別人的帳號不該進前端
   const [me, setMe] = useState<Account | null>(null)
   const [seedGuests, setSeedGuests] = useState<GuestFormValues[]>()
@@ -56,9 +89,9 @@ function App() {
 
   async function reloadFloor() {
     const characters = await fetchCharacters()
-    const next = charactersToGuests(characters)
+    const next = scatterOntoFloor(charactersToGuests(characters))
     setGuests(next)
-    setSaying(pickSayIndices(SAY_VISIBLE, next.length))
+    setSaying(pickSayIndices(SAY_VISIBLE, next))
   }
 
   function applyOwnAccount(account: Account) {
@@ -157,23 +190,25 @@ function App() {
 
   useEffect(() => {
     const id = setInterval(() => {
-      setSaying(pickSayIndices(SAY_VISIBLE, guests.length))
+      setSaying(pickSayIndices(SAY_VISIBLE, guests))
     }, SAY_ROTATE_MS)
     return () => clearInterval(id)
-  }, [guests.length])
+  }, [guests])
 
   return (
     <div className="app">
       <SceneCanvas venue="grassDay" paused={dialogOpen} onReady={handleSceneReady}>
-        {guests.map((guest, index) => (
-          <ZoneActor
-            key={guest.id}
-            body={guest.body}
-            name={guest.name}
-            say={saying.has(index) ? guest.say : undefined}
-            config={configForIndex(index)}
-          />
-        ))}
+        {guests.map((guest, index) =>
+          guest ? (
+            <ZoneActor
+              key={guest.id}
+              body={guest.body}
+              name={guest.name}
+              say={saying.has(index) ? guest.say : undefined}
+              config={configForIndex(index)}
+            />
+          ) : null,
+        )}
       </SceneCanvas>
 
       <GuestDialog
