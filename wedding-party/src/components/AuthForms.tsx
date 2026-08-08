@@ -4,7 +4,7 @@ import { ChevronDown } from 'lucide-react'
 import { PARTY_SIZE_MAX, parsePartySize } from '../lib/characterDrafts'
 import { Button } from './ui/button'
 import { DialogFooter } from './ui/dialog'
-
+import  weddingImage  from '@/assets/image/after-party-image.webp'
 export const fieldClass =
   'h-9 w-full rounded-lg border border-input bg-transparent px-3 outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50'
 
@@ -43,10 +43,10 @@ export function EventInfoSlot() {
     <div className="grid gap-3">
       {/* 主視覺圖未定，先留 aspect-video 空位 */}
       <div
-        className="flex aspect-video items-center justify-center rounded-xl border border-dashed border-foreground/20 bg-muted/40 text-sm text-muted-foreground"
+        className="flex aspect-video overflow-hidden items-center justify-center rounded-xl border border border-foreground/20 bg-muted/40 text-sm text-muted-foreground"
         aria-hidden
       >
-        活動圖片
+        <img src={weddingImage} alt="wedding" className="w-full h-full object-cover object-[0%_60%]" />
       </div>
       <div className="grid gap-1 text-sm">
         <p>
