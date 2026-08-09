@@ -48,13 +48,62 @@ export function EventInfoSlot() {
       >
         <img src={weddingImage} alt="wedding" className="w-full h-full object-cover object-[0%_60%]" />
       </div>
-      <div className="grid gap-1 text-sm">
-        <p>
-          <span className="font-medium">時間</span> 12/12 6:00 pm 開始
-        </p>
-        <p>場內會準備簡單飲食及酒水</p>
-        <p className="text-muted-foreground">勿空腹喝酒</p>
-        <p className="text-muted-foreground">也請注意：喝酒不開車，開車不喝酒</p>
+      <div className="grid gap-3 text-sm leading-relaxed">
+        <div className="grid gap-1">
+          <p>親愛的親朋好友 您好：</p>
+          <p>誠摯邀請您參與我們的幸福時刻！</p>
+          <p>在邁向人生新階段的這一天，希望能有您的祝福與陪伴。</p>
+        </div>
+
+        <div className="grid gap-1">
+          <p className="font-medium">【 宴客資訊 】</p>
+          <p>・日期：2026 年 12 月 12 日（星期六）</p>
+          <p>・時間：18:00 入席</p>
+          <p>・地點：是曾相識咖啡酒館 Is Déjà vu</p>
+          <p>・地址：803高雄市鹽埕區大義街2-1號C8-15</p>
+          <p>
+            ・地圖導航：
+            <a
+              className="underline underline-offset-2"
+              href="https://maps.app.goo.gl/e4nyxeyLGYxf2h6z7"
+              target="_blank"
+              rel="noreferrer"
+            >
+              https://maps.app.goo.gl/e4nyxeyLGYxf2h6z7
+            </a>
+          </p>
+        </div>
+
+        <div className="grid gap-1">
+          <p className="font-medium">【 交通與停車指南 】</p>
+          <p>📍 輕軌（最推薦）：</p>
+          <p>搭乘高雄輕軌至 C12 駁二大義站 下車，步行約 1 分鐘即可抵達。</p>
+          <p>📍 捷運：</p>
+          <p>搭乘高雄捷運橘線至 O2 鹽埕埔站（1號出口），沿大勇路步行至大義街，約 10 分鐘即可抵達。</p>
+          <p>📍 自行開車 / 停車資訊：</p>
+          <p>鹽埕大義停車場（高雄市鹽埕區大義街57號對面，近駁二大義倉庫群）</p>
+          <p>駁二大義公園停車場 / 路邊停車格（大義街、必信街周邊）</p>
+        </div>
+
+        <div className="grid gap-1">
+          <p className="font-medium">【 填表溫馨提醒 】</p>
+          <p>
+            為了讓我們能妥善規劃座位與餐點，請於{' '}
+            <span className="font-medium">2026 / 08 / 31（一）前</span> 協助填寫此表單。
+          </p>
+          <p>若後續需變更資訊，歡迎隨時與我們聯繫！</p>
+          <p>期待在特別的日子與您相見！</p>
+          <p>吳育亨 &amp; 陳宜彤 敬邀 💍</p>
+        </div>
+
+        <div className="grid gap-1">
+          <p className="font-medium">【 餐飲與溫馨提醒 】</p>
+          <p>🥂 場內將準備簡單飲食及酒水供大家享用</p>
+          <p className="text-muted-foreground">⚠️ 請勿空腹喝酒</p>
+          <p className="text-muted-foreground">
+            🚗 也請特別注意：喝酒不開車，開車不喝酒，平安回家最重要！
+          </p>
+        </div>
       </div>
     </div>
   )
