@@ -219,6 +219,7 @@ function App() {
         onRegister={handleRegister}
         onLogout={handleLogout}
         seedGuests={seedGuests}
+        loggedIn={me !== null}
       />
 
       {!sceneReady ? (

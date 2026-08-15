@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { User } from 'lucide-react'
+import { Info, User } from 'lucide-react'
 import { Tabs } from 'radix-ui'
 import {
   draftLabel,
@@ -45,6 +45,7 @@ type GuestDialogProps = {
   onLogout: () => void
   /** 登入後帶入自己的角色；未登入時為空 */
   seedGuests?: GuestFormValues[]
+  loggedIn: boolean
 }
 
 const PAGE_TITLE: Record<DialogPage, string> = {
@@ -65,6 +66,7 @@ export function GuestDialog({
   onRegister,
   onLogout,
   seedGuests,
+  loggedIn,
 }: GuestDialogProps) {
   function seededDrafts(): Draft<GuestFormValues>[] {
     return (seedGuests ?? []).map((values) => ({ id: crypto.randomUUID(), values }))
@@ -148,79 +150,101 @@ export function GuestDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button
-          size="icon-lg"
-          className="fixed right-4 bottom-4 z-40 size-12 rounded-full shadow-md"
-          aria-label="開啟對話框"
+    <div className="fixed right-4 bottom-4 z-40 flex flex-col-reverse gap-3">
+      <Dialog open={open} onOpenChange={onOpenChange}>
+        <DialogTrigger asChild>
+          <Button
+            size="icon-lg"
+            className="size-12 rounded-full shadow-md"
+            aria-label="開啟對話框"
+          >
+            <User className="size-6" />
+          </Button>
+        </DialogTrigger>
+        <DialogContent
+          className={cn(
+            PANEL_BASE,
+            PAGE_MAX_H[page],
+            page === 'guest' ? 'sm:max-w-2xl' : 'sm:max-w-md',
+          )}
         >
-          <User className="size-6" />
-        </Button>
-      </DialogTrigger>
-      <DialogContent
-        className={cn(
-          PANEL_BASE,
-          PAGE_MAX_H[page],
-          page === 'guest' ? 'sm:max-w-2xl' : 'sm:max-w-md',
-        )}
-      >
-        <DialogHeader>
-          <DialogTitle>{PAGE_TITLE[page]}</DialogTitle>
-        </DialogHeader>
+          <DialogHeader>
+            <DialogTitle>{PAGE_TITLE[page]}</DialogTitle>
+          </DialogHeader>
 
-        {page === 'login' || page === 'register' ? <EventInfoSlot /> : null}
+          {page === 'login' || page === 'register' ? <EventInfoSlot /> : null}
 
-        {page === 'login' ? (
-          <LoginForm onGoRegister={() => setPage('register')} onSuccess={handleLogin} />
-        ) : null}
+          {page === 'login' ? (
+            <LoginForm onGoRegister={() => setPage('register')} onSuccess={handleLogin} />
+          ) : null}
 
-        {page === 'register' ? (
-          <RegisterForm onGoLogin={() => setPage('login')} onSuccess={handleRegister} />
-        ) : null}
+          {page === 'register' ? (
+            <RegisterForm onGoLogin={() => setPage('login')} onSuccess={handleRegister} />
+          ) : null}
 
-        {page === 'guest' && selected ? (
-          <Tabs.Root value={selectedId} onValueChange={setSelectedId} className="grid gap-3">
-            {drafts.length > 1 ? (
-              <Tabs.List aria-label="切換角色" className="flex flex-wrap gap-1">
-                {drafts.map((draft, index) => (
-                  <Tabs.Trigger
-                    key={draft.id}
-                    value={draft.id}
-                    className="rounded-lg border border-transparent px-2.5 py-1 text-sm text-muted-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=active]:bg-muted data-[state=active]:font-medium data-[state=active]:text-foreground"
-                  >
-                    {draftLabel(draft.values.name, index)}
-                  </Tabs.Trigger>
-                ))}
-              </Tabs.List>
-            ) : null}
-
-            <Tabs.Content value={selectedId} className="grid gap-3 outline-none" tabIndex={-1}>
-              <GuestForm
-                key={selectedId}
-                value={selected.values}
-                onChange={handleFormChange}
-                onSubmit={handleFormSubmit}
-                submitting={saving}
-              />
-              {submitError ? (
-                <p className="text-xs text-destructive" role="alert">
-                  {submitError}
-                </p>
+          {page === 'guest' && selected ? (
+            <Tabs.Root value={selectedId} onValueChange={setSelectedId} className="grid gap-3">
+              {drafts.length > 1 ? (
+                <Tabs.List aria-label="切換角色" className="flex flex-wrap gap-1">
+                  {drafts.map((draft, index) => (
+                    <Tabs.Trigger
+                      key={draft.id}
+                      value={draft.id}
+                      className="rounded-lg border border-transparent px-2.5 py-1 text-sm text-muted-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 data-[state=active]:bg-muted data-[state=active]:font-medium data-[state=active]:text-foreground"
+                    >
+                      {draftLabel(draft.values.name, index)}
+                    </Tabs.Trigger>
+                  ))}
+                </Tabs.List>
               ) : null}
-              <Button
-                type="button"
-                variant="ghost"
-                size="sm"
-                className="mx-auto text-muted-foreground"
-                onClick={handleLogout}
-              >
-                登出
-              </Button>
-            </Tabs.Content>
-          </Tabs.Root>
-        ) : null}
-      </DialogContent>
-    </Dialog>
+
+              <Tabs.Content value={selectedId} className="grid gap-3 outline-none" tabIndex={-1}>
+                <GuestForm
+                  key={selectedId}
+                  value={selected.values}
+                  onChange={handleFormChange}
+                  onSubmit={handleFormSubmit}
+                  submitting={saving}
+                />
+                {submitError ? (
+                  <p className="text-xs text-destructive" role="alert">
+                    {submitError}
+                  </p>
+                ) : null}
+                <Button
+                  type="button"
+                  variant="ghost"
+                  size="sm"
+                  className="mx-auto text-muted-foreground"
+                  onClick={handleLogout}
+                >
+                  登出
+                </Button>
+              </Tabs.Content>
+            </Tabs.Root>
+          ) : null}
+        </DialogContent>
+      </Dialog>
+
+      {loggedIn ? (
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              size="icon-lg"
+              className="size-12 rounded-full shadow-md"
+              aria-label="派對資訊"
+            >
+              <Info className="size-6" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className={cn(PANEL_BASE, 'h-auto sm:max-w-md')}>
+            <DialogHeader>
+              <DialogTitle>派對資訊</DialogTitle>
+            </DialogHeader>
+            <EventInfoSlot />
+          </DialogContent>
+        </Dialog>
+      ) : null}
+    </div>
   )
 }
