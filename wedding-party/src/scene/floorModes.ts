@@ -1,6 +1,8 @@
 export const FLOOR_GRID = {
   width: 25,
-  depth: 15,
+  depth: 22,
+  /** chat/sit 帶；亂跑吃掉加長的深度，避免把前區一起拉大 */
+  slotDepth: 7.5,
   tileSize: 1,
   tilePx: 32,
   borderPx: 2,
@@ -52,8 +54,8 @@ const ROWS_PER_ZONE = 2
 const ZONE_COLORS = ['#5c1a2e', '#5c4a1a', '#1a2e5c'] as const
 const SLOT_ZONE_GRAY = '#7a797d'
 const X_MID = FLOOR_GRID.width / 2
-const Z_MID = FLOOR_GRID.depth / 2
-const WANDER_ROW_START = Math.ceil(Z_MID - 0.5)
+const SLOT_DEPTH = FLOOR_GRID.slotDepth
+const WANDER_ROW_START = Math.ceil(SLOT_DEPTH - 0.5)
 
 function scrollingBandColor(row: number, frame: number) {
   return ZONE_COLORS[Math.floor((row + frame) / ROWS_PER_ZONE) % ZONE_COLORS.length]
@@ -62,7 +64,7 @@ function scrollingBandColor(row: number, frame: number) {
 function tileZone(col: number, row: number): 'chat' | 'sit' | 'wander' {
   const gx = col + 0.5
   const gz = row + 0.5
-  if (gz >= Z_MID) return 'wander'
+  if (gz >= SLOT_DEPTH) return 'wander'
   if (gx <= X_MID) return 'chat'
   return 'sit'
 }

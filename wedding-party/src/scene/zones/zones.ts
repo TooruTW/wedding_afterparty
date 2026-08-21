@@ -1,11 +1,11 @@
 import { FLOOR_GRID } from '../floorModes'
 import type { Pose } from '../../types/pose'
 
-/** 舊版 20×10 配置等比例放大至 FLOOR_GRID（25×15），以 X/Z 中線分區 */
+/** 舊 20×10 的前半對到 chat/sit 帶；地板加長只給亂跑 */
 const X_MID = FLOOR_GRID.width / 2
-const Z_MID = FLOOR_GRID.depth / 2
+const SLOT_DEPTH = FLOOR_GRID.slotDepth
 const SCALE_X = FLOOR_GRID.width / 20
-const SCALE_Z = FLOOR_GRID.depth / 10
+const SCALE_Z = SLOT_DEPTH / 5
 
 function scaleGrid(x: number, z: number): [number, number] {
   return [x * SCALE_X, z * SCALE_Z]
@@ -28,7 +28,7 @@ export const ZONES: Record<ZoneId, ZoneAABB> = {
     minX: 0,
     maxX: X_MID,
     minZ: 0,
-    maxZ: Z_MID,
+    maxZ: SLOT_DEPTH,
     allowedPoses: ['chat', 'listen'],
   },
   sit: {
@@ -36,14 +36,14 @@ export const ZONES: Record<ZoneId, ZoneAABB> = {
     minX: X_MID,
     maxX: FLOOR_GRID.width,
     minZ: 0,
-    maxZ: Z_MID,
+    maxZ: SLOT_DEPTH,
     allowedPoses: ['sit'],
   },
   wander: {
     id: 'wander',
     minX: 0,
     maxX: FLOOR_GRID.width,
-    minZ: Z_MID,
+    minZ: SLOT_DEPTH,
     maxZ: FLOOR_GRID.depth,
     allowedPoses: ['stand'],
   },
@@ -93,14 +93,14 @@ export const ZONE_SLOTS: ZoneSlot[] = [
   { id: 'sit-10', zoneId: 'sit', ...slotFromLegacy(18.5, 3.5), rotationY: 0.2, pose: 'sit' },
 ]
 
-/** 亂跑區出生點：5×4 格分散 */
-const WANDER_SPAWN_COLS = 5
-const WANDER_SPAWN_ROWS = 4
+/** 亂跑區出生點：6×5 格，對上容量 50 裡的 30 個亂跑格 */
+const WANDER_SPAWN_COLS = 6
+const WANDER_SPAWN_ROWS = 5
 
 function buildWanderSpawnGrids(): [number, number][] {
   const minX = 2
   const maxX = FLOOR_GRID.width - 2
-  const minZ = Z_MID + 1
+  const minZ = SLOT_DEPTH + 1
   const maxZ = FLOOR_GRID.depth - 1
   const grids: [number, number][] = []
   for (let row = 0; row < WANDER_SPAWN_ROWS; row++) {
@@ -146,18 +146,18 @@ export function zoneWorldBounds(zoneId: ZoneId) {
 function assertGridToWorld() {
   const [backLeftX, backLeftZ] = gridToWorld(0, 0)
   console.assert(
-    Math.abs(backLeftX - (-11.5)) < 1e-6 && Math.abs(backLeftZ - (-7)) < 1e-6,
-    `gridToWorld(0,0) expected (-11.5, -7), got (${backLeftX}, ${backLeftZ})`,
+    Math.abs(backLeftX - (-12)) < 1e-6 && Math.abs(backLeftZ - (-10.5)) < 1e-6,
+    `gridToWorld(0,0) expected (-12, -10.5), got (${backLeftX}, ${backLeftZ})`,
   )
   const [chatX, chatZ] = gridToWorld(3.125, 3.75)
   console.assert(
-    Math.abs(chatX - (-8.375)) < 1e-6 && Math.abs(chatZ - (-3.25)) < 1e-6,
-    `gridToWorld(3.125,3.75) expected (-8.375, -3.25), got (${chatX}, ${chatZ})`,
+    Math.abs(chatX - (-8.875)) < 1e-6 && Math.abs(chatZ - (-6.75)) < 1e-6,
+    `gridToWorld(3.125,3.75) expected (-8.875, -6.75), got (${chatX}, ${chatZ})`,
   )
-  const [midX, midZ] = gridToWorld(X_MID, Z_MID)
+  const [splitX, splitZ] = gridToWorld(X_MID, SLOT_DEPTH)
   console.assert(
-    Math.abs(midX - 0.5) < 1e-6 && Math.abs(midZ - 0.5) < 1e-6,
-    `gridToWorld midline expected (0.5, 0.5), got (${midX}, ${midZ})`,
+    Math.abs(splitX - 0.5) < 1e-6 && Math.abs(splitZ - (-3)) < 1e-6,
+    `gridToWorld zone split expected (0.5, -3), got (${splitX}, ${splitZ})`,
   )
 }
 

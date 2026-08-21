@@ -22,7 +22,7 @@ const SAY_VISIBLE = 10
 const SAY_ROTATE_MS = 5000
 const SPLASH_MIN_MS = 1000
 /** 場上固定格子數；角色隨機塞進格子，人少才不會全擠在前面的聊天／坐下區 */
-const FLOOR_CAPACITY = 30
+const FLOOR_CAPACITY = 50
 /** 遮罩起算點 = App 載入的時間；整支程式只有一個 App，不需要 per-instance */
 const SPLASH_STARTED_AT = Date.now()
 
@@ -69,9 +69,9 @@ function pickSayIndices(count: number, floor: (FakeGuest | null)[]) {
       say: '',
       body: { face: 'bars' as const, headSize: 1 as const },
     })),
-    30,
+    FLOOR_CAPACITY,
   )
-  console.assert(demo.length === 30, 'floor is always capacity-long')
+  console.assert(demo.length === FLOOR_CAPACITY, 'floor is always capacity-long')
   console.assert(demo.filter(Boolean).length === 3, 'only real guests occupy cells')
 }
 
