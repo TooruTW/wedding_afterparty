@@ -58,7 +58,7 @@ export function EventInfoSlot() {
         <div className="grid gap-1">
           <p className="font-medium">【 宴客資訊 】</p>
           <p>・日期：2026 年 12 月 12 日（星期六）</p>
-          <p>・時間：18:00 入席</p>
+          <p>・時間：19:00 入席</p>
           <p>・地點：是曾相識咖啡酒館 Is Déjà vu</p>
           <p>・地址：803高雄市鹽埕區大義街2-1號C8-15</p>
           <p>
